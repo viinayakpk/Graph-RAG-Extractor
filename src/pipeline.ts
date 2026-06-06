@@ -1,0 +1,58 @@
+import type { Logger } from "pino";
+import type { Chunk } from "./types/chunk.js";
+import type { ChunkExtraction, ConsolidatedRequirement } from "./types/requirement.js";
+import type { ProcurementMatchDeliverable } from "./types/tree.js";
+import { profile } from "./profiler/index.js";
+import { parse } from "./parser/index.js";
+import { chunk } from "./chunker/index.js";
+import { extract } from "./extractor/index.js";
+import { consolidate } from "./consolidator/index.js";
+import { buildTree } from "./builder/index.js";
+
+export interface PipelineOptions {
+  force: boolean;
+}
+
+export interface PipelineResult {
+  chunks: Chunk[];
+  extractions: ChunkExtraction[];
+  consolidated: ConsolidatedRequirement[];
+  tree: ProcurementMatchDeliverable[];
+  stats: { leafCount: number; skippedChunks: number };
+}
+
+export async function runPipeline(
+  pdfPath: string,
+  outDir: string,
+  options: PipelineOptions,
+  log: Logger,
+): Promise<PipelineResult> {
+  const documentProfile = await profile(pdfPath, log);
+  log.info({ strategy: documentProfile.suggestedStrategy, confidence: documentProfile.parserConfidence }, "profiler done");
+
+  const parsed = await parse(pdfPath, documentProfile, log);
+  log.info({ pageCount: parsed.pageCount }, "parser done");
+
+  const chunks = await chunk(parsed, documentProfile, log);
+  log.info({ chunkCount: chunks.length }, "chunker done");
+
+  const { extractions, skippedChunks } = await extract(chunks, outDir, options.force, log);
+  log.info({ extractionCount: extractions.length, skippedChunks }, "extractor done");
+
+  const consolidated = await consolidate(extractions, log);
+  log.info({ requirementCount: consolidated.length }, "consolidator done");
+
+  const tree = await buildTree(consolidated, documentProfile, log);
+  const leafCount = countLeaves(tree);
+  log.info({ leafCount }, "builder done");
+
+  return { chunks, extractions, consolidated, tree, stats: { leafCount, skippedChunks } };
+}
+
+function countLeaves(nodes: ProcurementMatchDeliverable[]): number {
+  return nodes.reduce((sum, node) => {
+    return node.deliverableArray.length === 0
+      ? sum + 1
+      : sum + countLeaves(node.deliverableArray);
+  }, 0);
+}
