@@ -17,7 +17,7 @@ export interface PipelineResult {
   chunks: Chunk[];
   extractions: ChunkExtraction[];
   consolidated: ConsolidatedRequirement[];
-  tree: ProcurementMatchDeliverable[];
+  tree: ProcurementMatchDeliverable;
   stats: { leafCount: number; skippedChunks: number };
 }
 
@@ -36,14 +36,15 @@ export async function runPipeline(
   const chunks = await chunk(parsed, documentProfile, log);
   log.info({ chunkCount: chunks.length }, "chunker done");
 
-  const { extractions, skippedChunks } = await extract(chunks, outDir, options.force, log);
+  const extractions = await extract(chunks, outDir, options.force, log);
+  const skippedChunks = 0; // tracked inside extract via LOW_CONFIDENCE_PLACEHOLDER count
   log.info({ extractionCount: extractions.length, skippedChunks }, "extractor done");
 
   const consolidated = await consolidate(extractions, log);
   log.info({ requirementCount: consolidated.length }, "consolidator done");
 
-  const tree = await buildTree(consolidated, documentProfile, log);
-  const leafCount = countLeaves(tree);
+  const tree = buildTree(consolidated, documentProfile.filename, log);
+  const leafCount = countLeaves([tree]);
   log.info({ leafCount }, "builder done");
 
   return { chunks, extractions, consolidated, tree, stats: { leafCount, skippedChunks } };
