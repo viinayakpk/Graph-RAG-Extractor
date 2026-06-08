@@ -1,0 +1,20 @@
+node_modules
+dist
+.cache
+outputs
+pdfs
+*.log
+logs
+.env
+.env.local
+.env.*.local
+tmp
+temp
+*.tmp
+.git
+Task and files
+eval
+idea.md
+ARCHITECTURE.md
+CLAUDE.md
+*.tsbuildinfo
