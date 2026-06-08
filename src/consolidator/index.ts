@@ -69,6 +69,8 @@ export async function consolidate(
         standards: [...new Set(sources.flatMap((s) => s.standards))],
         referenced_annexes: [...new Set(sources.flatMap((s) => s.referenced_annexes))],
         category_code: best.category_code,
+        section_heading: best.section_heading,
+        item_number: best.item_number,
       });
 
       for (const id of chunkIds) mergedChunkIds.add(id);
@@ -144,6 +146,8 @@ export async function consolidate(
       standards: ext.standards,
       referenced_annexes: ext.referenced_annexes,
       category_code: ext.category_code,
+      section_heading: ext.section_heading,
+      item_number: ext.item_number,
     });
   }
 

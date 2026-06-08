@@ -61,4 +61,6 @@ export const ConsolidatedRequirementSchema: z.ZodType<ConsolidatedRequirement> =
     standards: z.array(z.string()),
     referenced_annexes: z.array(z.string()),
     category_code: z.string().nullable(),
+    section_heading: z.string().nullable(),
+    item_number: z.string().nullable(),
   });

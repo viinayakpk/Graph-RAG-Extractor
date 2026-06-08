@@ -9,6 +9,7 @@ import {
   SYSTEM_PROMPT_GENERAL,
   SYSTEM_PROMPT_LV_POSITION,
   SYSTEM_PROMPT_SECTION,
+  SYSTEM_PROMPT_VORBEMERKUNGEN,
 } from "./prompt.js";
 import {
   validateExtractions,
@@ -22,6 +23,7 @@ const RETRY_BASE_MS = 1000;
 function systemPromptFor(chunk: Chunk): string {
   if (chunk.document_region === "lv-position") return SYSTEM_PROMPT_LV_POSITION;
   if (chunk.document_region === "section") return SYSTEM_PROMPT_SECTION;
+  if (chunk.document_region === "vorbemerkungen") return SYSTEM_PROMPT_VORBEMERKUNGEN;
   return SYSTEM_PROMPT_GENERAL;
 }
 
@@ -61,6 +63,19 @@ async function callWithRetry(
           { role: "user", content: buildUserMessage(chunk) },
         ],
       });
+
+      if (response.usage) {
+        log.info(
+          {
+            chunk_id: chunk.chunk_id,
+            source_file: chunk.source_file,
+            prompt_tokens: response.usage.prompt_tokens,
+            completion_tokens: response.usage.completion_tokens,
+            total_tokens: response.usage.total_tokens,
+          },
+          "DeepSeek token usage"
+        );
+      }
 
       const rawContent = response.choices[0]?.message?.content ?? "{}";
       let parsed: unknown;

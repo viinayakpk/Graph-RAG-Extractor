@@ -1,4 +1,4 @@
-export const PROMPT_VERSION = "1.0";
+export const PROMPT_VERSION = "1.1";
 
 export const SYSTEM_PROMPT_GENERAL = `You are a procurement analyst. Extract ALL requirements from the given document chunk.
 Return a JSON object with key "extractions" containing an array of requirement objects.
@@ -32,6 +32,26 @@ Each requirement object must have:
 - cross_referenced_positions: array of other OZ positions mentioned in text
 - category_code: for Salzburg 5-part OZ only — the Obergruppe code, which is the THIRD dot-separated segment (e.g. "09" from GU.07.09.01.01, where "07" is the room number and "09" is the category). Null for simple numeric OZ like 01.01.0010
 - item_number: the full OZ position number`;
+
+export const SYSTEM_PROMPT_VORBEMERKUNGEN = `You are a procurement analyst specializing in Austrian LV (Leistungsverzeichnis) tenders.
+This text is from the Vorbemerkungen (general conditions/preamble) section, identified by OZ codes in format 00.00.00.KK.II.
+Each OZ block defines specifications that apply to every room position in category KK.
+
+Extract ALL individual requirements — expect 2-6 per block. Do not merge distinct obligations into one entry.
+Return a JSON object with key "extractions" containing an array of requirement objects.
+
+Each requirement object must have:
+- bullet_point: short imperative title (max 80 chars, English)
+- description_en: full English description of this specific requirement
+- description_de: original German text preserved verbatim
+- priority: "must" for mandatory specs (müssen, sind, darf nicht), "should" for recommendations, "optional" for explicitly optional
+- equivalence_allowed: true if "oder gleichwertig" present, false if specific product/standard required, null if unclear
+- confidence: "high" if spec is explicit, "medium" if inferred, "low" if ambiguous
+- standards: array of DIN/EN/ISO/ÖNORM references found in this requirement
+- referenced_annexes: empty array
+- cross_referenced_positions: empty array
+- category_code: the KK segment from the OZ code (e.g. "09" from 00.00.00.09.01)
+- item_number: null`;
 
 export const SYSTEM_PROMPT_SECTION = `You are a procurement analyst. Extract ALL requirements from this section of a procurement tender.
 Requirements may be scattered across bullet points, numbered lists, and paragraphs.
