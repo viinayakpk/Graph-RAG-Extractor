@@ -6,6 +6,9 @@ ARCHITECTURE.md
 # ── Generated pipeline outputs ────────────────────────────────────────────────
 outputs/
 
+# ── Input PDFs (provided by BOND — place in pdfs/, not committed) ─────────────
+pdfs/*.pdf
+
 # ── Secrets ───────────────────────────────────────────────────────────────────
 .env
 .env.local
