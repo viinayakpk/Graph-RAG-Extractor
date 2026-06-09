@@ -3,12 +3,9 @@ import type { ChunkExtraction, ConsolidatedRequirement } from "../types/requirem
 import { applyCrossReferenceRule, crossReferenceMergeRecord } from "./rules/cross-reference.js";
 import { applyExactMatchRule, exactMatchMergeRecord } from "./rules/exact-match.js";
 import { applyPreambleCategoryRule, preambleCategoryMergeRecord } from "./rules/preamble-category.js";
-import { applySharedStandardRule, sharedStandardMergeRecord } from "./rules/shared-standard.js";
 import { applyDedupRule, dedupMergeRecord } from "./rules/dedup.js";
-import { applySimilarityRule } from "./similarity.js";
 
 function mergeGroup(
-  canonicalId: string,
   allIds: string[],
   byChunkId: Map<string, ChunkExtraction[]>
 ): { sources: ChunkExtraction[]; chunkIds: string[] } {
@@ -27,10 +24,10 @@ function pickBest(extractions: ChunkExtraction[]): ChunkExtraction {
   )[0]!;
 }
 
-export async function consolidate(
+export function consolidate(
   extractions: ChunkExtraction[],
   log: Logger
-): Promise<ConsolidatedRequirement[]> {
+): ConsolidatedRequirement[] {
   log.info({ input: extractions.length }, "starting consolidation");
 
   const byChunkId = new Map<string, ChunkExtraction[]>();
@@ -50,7 +47,7 @@ export async function consolidate(
     for (const [canonical, allIds] of mergeGroups) {
       if (allIds.some((id) => mergedChunkIds.has(id))) continue; // don't re-merge
 
-      const { sources, chunkIds } = mergeGroup(canonical, allIds, byChunkId);
+      const { sources, chunkIds } = mergeGroup(allIds, byChunkId);
       if (sources.length === 0) continue;
 
       const best = pickBest(sources);
@@ -69,6 +66,8 @@ export async function consolidate(
         standards: [...new Set(sources.flatMap((s) => s.standards))],
         referenced_annexes: [...new Set(sources.flatMap((s) => s.referenced_annexes))],
         category_code: best.category_code,
+        section_heading: best.section_heading,
+        item_number: best.item_number,
       });
 
       for (const id of chunkIds) mergedChunkIds.add(id);
@@ -102,49 +101,49 @@ export async function consolidate(
     return preambleCategoryMergeRecord(ids, best.category_code ?? "unknown", preambleIds, positionIds);
   });
 
-  // Rule 3: shared standard reference
-  const standardMerges = applySharedStandardRule(extractions, log);
-  applyMerges(standardMerges, (ids, best) =>
-    sharedStandardMergeRecord(ids, best.standards[0] ?? "unknown")
-  );
-
-  // Rule 4: staging dedup
+  // Rule 3: staging dedup — catch remaining extractions with identical bullet_point
   const dedupMerges = applyDedupRule(extractions, mergedChunkIds, log);
   applyMerges(dedupMerges, (ids) => dedupMergeRecord(ids));
 
-  // Rule 5: optional embedding similarity
-  const similarityMerges = await applySimilarityRule(extractions, log);
-  applyMerges(similarityMerges, (ids) => ({
-    rule: "embedding-similarity",
-    mergeConfidence: "low",
-    evidenceLinks: ids.map((id) => ({ chunkId: id, evidenceRole: "duplication" as const })),
-    whyMerged: "Embedding cosine similarity above threshold",
-  }));
-
-  // Any extraction not merged by any rule → standalone requirement
+  // Any extraction not merged by any rule → one leaf per extraction.
+  // Group by chunk_id first so we can assign stable unique IDs when a chunk
+  // produced multiple requirements (e.g. vorbemerkungen or multi-item sections).
+  const unmergedByChunk = new Map<string, ChunkExtraction[]>();
   for (const ext of extractions) {
     if (mergedChunkIds.has(ext.chunk_id)) continue;
-    if (consolidatedMap.has(ext.chunk_id)) continue;
+    const list = unmergedByChunk.get(ext.chunk_id) ?? [];
+    list.push(ext);
+    unmergedByChunk.set(ext.chunk_id, list);
+  }
 
-    consolidatedMap.set(ext.chunk_id, {
-      id: ext.chunk_id,
-      source_chunk_ids: [ext.chunk_id],
-      merge_record: {
-        rule: "staging-dedup",
-        mergeConfidence: ext.category_code ? "medium" : "high",
-        evidenceLinks: [{ chunkId: ext.chunk_id, evidenceRole: "general_spec" }],
-        whyMerged: "Standalone requirement — no merge candidates found",
-      },
-      bullet_point: ext.bullet_point,
-      description_en: ext.description_en,
-      description_de: ext.description_de,
-      priority: ext.priority,
-      equivalence_allowed: ext.equivalence_allowed,
-      confidence: ext.confidence,
-      standards: ext.standards,
-      referenced_annexes: ext.referenced_annexes,
-      category_code: ext.category_code,
-    });
+  for (const [chunkId, exts] of unmergedByChunk) {
+    for (let i = 0; i < exts.length; i++) {
+      const ext = exts[i]!;
+      // Single extraction from chunk → use chunk_id as-is to keep IDs clean.
+      // Multiple extractions → suffix with index so IDs remain unique.
+      const id = exts.length === 1 ? chunkId : `${chunkId}::${i}`;
+      consolidatedMap.set(id, {
+        id,
+        source_chunk_ids: [chunkId],
+        merge_record: {
+          rule: "staging-dedup",
+          mergeConfidence: "high",
+          evidenceLinks: [{ chunkId, evidenceRole: "general_spec" }],
+          whyMerged: "Standalone requirement — no merge candidates found",
+        },
+        bullet_point: ext.bullet_point,
+        description_en: ext.description_en,
+        description_de: ext.description_de,
+        priority: ext.priority,
+        equivalence_allowed: ext.equivalence_allowed,
+        confidence: ext.confidence,
+        standards: ext.standards,
+        referenced_annexes: ext.referenced_annexes,
+        category_code: ext.category_code,
+        section_heading: ext.section_heading,
+        item_number: ext.item_number,
+      });
+    }
   }
 
   const results = [...consolidatedMap.values()];

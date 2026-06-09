@@ -4,12 +4,7 @@ import type { ChunkExtraction } from "../types/requirement.js";
 import { buildClient, modelName } from "./client.js";
 import { readCache, writeCache } from "./cache.js";
 import { createQueue } from "./queue.js";
-import {
-  PROMPT_VERSION,
-  SYSTEM_PROMPT_GENERAL,
-  SYSTEM_PROMPT_LV_POSITION,
-  SYSTEM_PROMPT_SECTION,
-} from "./prompt.js";
+import { PROMPT_VERSION, buildSystemPrompt } from "./prompt.js";
 import {
   validateExtractions,
   recoverPartialExtractions,
@@ -18,12 +13,6 @@ import {
 
 const MAX_RETRIES = 3;
 const RETRY_BASE_MS = 1000;
-
-function systemPromptFor(chunk: Chunk): string {
-  if (chunk.document_region === "lv-position") return SYSTEM_PROMPT_LV_POSITION;
-  if (chunk.document_region === "section") return SYSTEM_PROMPT_SECTION;
-  return SYSTEM_PROMPT_GENERAL;
-}
 
 function buildUserMessage(chunk: Chunk): string {
   return [
@@ -44,6 +33,7 @@ async function callWithRetry(
 ): Promise<ChunkExtraction[]> {
   const client = buildClient();
   const model = modelName();
+  const systemPrompt = buildSystemPrompt(chunk.document_region);
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -57,10 +47,23 @@ async function callWithRetry(
         temperature: 0,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: systemPromptFor(chunk) },
+          { role: "system", content: systemPrompt },
           { role: "user", content: buildUserMessage(chunk) },
         ],
       });
+
+      if (response.usage) {
+        log.info(
+          {
+            chunk_id: chunk.chunk_id,
+            source_file: chunk.source_file,
+            prompt_tokens: response.usage.prompt_tokens,
+            completion_tokens: response.usage.completion_tokens,
+            total_tokens: response.usage.total_tokens,
+          },
+          "DeepSeek token usage"
+        );
+      }
 
       const rawContent = response.choices[0]?.message?.content ?? "{}";
       let parsed: unknown;

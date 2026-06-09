@@ -1,18 +1,9 @@
 import type { DocumentStrategy } from "./chunk.js";
 
-export interface TextItem {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  text: string;
-}
-
 export interface ParsedPage {
   pageNumber: number;
   rawText: string;
   cleanedText: string;
-  textItems: TextItem[];
   detectedPositions: Array<{ ozNumber: string; lineStart: number; lineEnd: number }>;
 }
 
