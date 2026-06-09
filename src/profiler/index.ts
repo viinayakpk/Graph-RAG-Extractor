@@ -54,28 +54,27 @@ function samplePageNumbers(pageCount: number): number[] {
   return [...first, ...middle, ...last];
 }
 
-// For "mixed" documents: find the page just before preamble OZ codes stop appearing.
-// Scans sampled pages in order; returns (firstNonPreambleSampled - 1) so the preamble
-// strategy receives all preamble pages even if the exact boundary falls between samples.
+// For "mixed" documents: find the last sampled page that contains a vorbemerkungen OZ code,
+// then return (nextSample - 1) as the boundary so pages between the last preamble sample
+// and the next sample are included in the preamble pass, not the position pass.
+// Scanning all samples (not stopping at the first gap) handles continuation pages within
+// a vorbemerkungen block — those pages have no OZ code at the top but are still preamble.
 function detectPreambleBoundary(
   pageNumbers: number[],
   rawPageTexts: string[],
 ): number | null {
   let lastPreambleSampled: number | null = null;
-  let firstNonPreambleSampled: number | null = null;
 
   for (let i = 0; i < pageNumbers.length; i++) {
-    const pageNum = pageNumbers[i]!;
     if (pageHasPreambleOz(rawPageTexts[i]!)) {
-      lastPreambleSampled = pageNum;
-    } else if (lastPreambleSampled !== null && firstNonPreambleSampled === null) {
-      firstNonPreambleSampled = pageNum;
+      lastPreambleSampled = pageNumbers[i]!;
     }
   }
 
   if (lastPreambleSampled === null) return null;
-  // Use the page just before the first non-preamble sample; if none found, use last seen.
-  return firstNonPreambleSampled !== null ? firstNonPreambleSampled - 1 : lastPreambleSampled;
+
+  const nextSampled = pageNumbers.find((p) => p > lastPreambleSampled!);
+  return nextSampled !== undefined ? nextSampled - 1 : lastPreambleSampled;
 }
 
 export async function profile(filePath: string, log: Logger): Promise<DocumentProfile> {
