@@ -59,4 +59,6 @@ export interface ConsolidatedRequirement {
   standards: string[];
   referenced_annexes: string[];
   category_code: string | null;
+  section_heading: string | null;
+  item_number: string | null;
 }

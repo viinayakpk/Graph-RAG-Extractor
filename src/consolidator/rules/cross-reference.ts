@@ -10,28 +10,33 @@ export function applyCrossReferenceRule(
 ): Map<string, string[]> {
   // Returns a map: canonical chunk_id → all chunk_ids to merge into it
   const groups = new Map<string, Set<string>>();
-  const ozIndex = new Map<string, string>(); // OZ string → chunk_id that owns it
+  const ozIndex = new Map<string, string[]>(); // OZ string → all chunk_ids that carry it
 
   for (const ext of extractions) {
-    if (ext.item_number) ozIndex.set(ext.item_number, ext.chunk_id);
+    if (!ext.item_number) continue;
+    const list = ozIndex.get(ext.item_number) ?? [];
+    list.push(ext.chunk_id);
+    ozIndex.set(ext.item_number, list);
   }
 
   for (const ext of extractions) {
     for (const ref of ext.cross_referenced_positions) {
-      const targetChunkId = ozIndex.get(ref);
-      if (!targetChunkId || targetChunkId === ext.chunk_id) continue;
+      const targetChunkIds = ozIndex.get(ref) ?? [];
+      for (const targetChunkId of targetChunkIds) {
+        if (targetChunkId === ext.chunk_id) continue;
 
-      // Use lexicographically smaller chunk_id as canonical
-      const canonical = ext.chunk_id < targetChunkId ? ext.chunk_id : targetChunkId;
-      const secondary = canonical === ext.chunk_id ? targetChunkId : ext.chunk_id;
+        // Use lexicographically smaller chunk_id as canonical
+        const canonical = ext.chunk_id < targetChunkId ? ext.chunk_id : targetChunkId;
+        const secondary = canonical === ext.chunk_id ? targetChunkId : ext.chunk_id;
 
-      if (!groups.has(canonical)) groups.set(canonical, new Set([canonical]));
-      groups.get(canonical)!.add(secondary);
+        if (!groups.has(canonical)) groups.set(canonical, new Set([canonical]));
+        groups.get(canonical)!.add(secondary);
 
-      log.debug(
-        { canonical, secondary, oz_reference: ref, rule: "cross-reference" },
-        "Rule 0: cross-reference merge candidate"
-      );
+        log.debug(
+          { canonical, secondary, oz_reference: ref, rule: "cross-reference" },
+          "Rule 0: cross-reference merge candidate"
+        );
+      }
     }
   }
 

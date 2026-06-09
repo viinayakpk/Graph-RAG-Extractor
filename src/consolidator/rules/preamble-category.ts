@@ -30,13 +30,20 @@ export function applyPreambleCategoryRule(
   const merges = new Map<string, string[]>();
   for (const [code, { preamble: pre, positions: pos }] of byCategory) {
     if (pre.length === 0 || pos.length === 0) continue;
-    const canonical = pre[0]!.chunk_id;
-    const all = [canonical, ...pre.slice(1).map((e) => e.chunk_id), ...pos.map((e) => e.chunk_id)];
-    merges.set(canonical, all);
-    log.debug(
-      { category_code: code, canonical, preamble_count: pre.length, position_count: pos.length, rule: "preamble-category" },
-      "Rule 2: vorbemerkungen-category merge"
-    );
+
+    // One leaf per unique preamble OZ chunk — each gets all room position chunk IDs attached.
+    // Multiple preamble extractions from the same chunk (same block, multiple requirements)
+    // still collapse to one ConsolidatedRequirement via pickBest in consolidator/index.ts.
+    const posChunkIds = [...new Set(pos.map((e) => e.chunk_id))];
+    const preambleChunkIds = [...new Set(pre.map((e) => e.chunk_id))];
+
+    for (const preChunkId of preambleChunkIds) {
+      merges.set(preChunkId, [preChunkId, ...posChunkIds]);
+      log.debug(
+        { category_code: code, canonical: preChunkId, position_count: posChunkIds.length, rule: "preamble-category" },
+        "Rule 2: vorbemerkungen-category merge"
+      );
+    }
   }
 
   return merges;

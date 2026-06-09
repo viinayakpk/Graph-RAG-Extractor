@@ -8,20 +8,61 @@ export interface Group {
   requirements: ConsolidatedRequirement[];
 }
 
-// Derive L1/L2 grouping keys from a consolidated requirement
-// Strategy: use category_code if present; fall back to bullet_point prefix words
+const FAHRRAD_OZ_RE = /^(\d{2})\.(\d{2})\.\d{4}$/;
+const SALZBURG_OZ_RE = /^[A-Z]{2}\.(\d{2})\.(\d{2})\.\d{2}\.\d{2}$/;
+
+// Derive L1/L2 grouping keys from a consolidated requirement.
+// Priority: category_code (Salzburg) → numeric OZ prefix (Fahrradgaragen) → section_heading (Christmas) → fallback
 function l1l2From(req: ConsolidatedRequirement): { l1Key: string; l1Label: string; l2Key: string; l2Label: string } {
+  // Salzburg vorbemerkungen and room positions carry category_code
   if (req.category_code) {
-    // Salzburg: category_code like "07" → L1 = "Technical Requirements", L2 = category name
     return {
       l1Key: "technical",
       l1Label: "Technical Requirements",
       l2Key: req.category_code,
-      l2Label: req.category_code,
+      l2Label: `Category ${req.category_code}`,
     };
   }
 
-  // Christmas / general: group by first word of bullet_point as L2, all under one L1
+  // Fahrradgaragen: numeric OZ like 01.02.0030 → L1 = group 01, L2 = subgroup 01.02
+  const fahrradMatch = req.item_number ? FAHRRAD_OZ_RE.exec(req.item_number) : null;
+  if (fahrradMatch) {
+    const grp = fahrradMatch[1]!;
+    const sub = fahrradMatch[2]!;
+    const l2Key = `${grp}.${sub}`;
+    return {
+      l1Key: grp,
+      l1Label: `Group ${grp}`,
+      l2Key,
+      l2Label: `Subgroup ${l2Key}`,
+    };
+  }
+
+  // Salzburg room positions without category_code (shouldn't happen, but covered)
+  const salzburgMatch = req.item_number ? SALZBURG_OZ_RE.exec(req.item_number) : null;
+  if (salzburgMatch) {
+    const room = salzburgMatch[1]!;
+    const cat = salzburgMatch[2]!;
+    return {
+      l1Key: `room_${room}`,
+      l1Label: `Room ${room}`,
+      l2Key: `${room}_${cat}`,
+      l2Label: `Room ${room} – Category ${cat}`,
+    };
+  }
+
+  // Christmas / section-list: group by section heading
+  if (req.section_heading) {
+    const key = req.section_heading.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 40);
+    return {
+      l1Key: "procurement",
+      l1Label: "Procurement Requirements",
+      l2Key: key,
+      l2Label: req.section_heading,
+    };
+  }
+
+  // Last resort: first 2-3 words of bullet_point
   const words = req.bullet_point.split(/\s+/);
   const l2Key = words.slice(0, 2).join("_").toLowerCase().replace(/[^a-z0-9_]/g, "");
   return {

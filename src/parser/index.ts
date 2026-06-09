@@ -2,7 +2,7 @@ import { readFile } from "fs/promises";
 import { basename } from "path";
 import type { Logger } from "pino";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
-import type { DocumentProfile, ParsedDocument, ParsedPage, TextItem } from "../types/document.js";
+import type { DocumentProfile, ParsedDocument, ParsedPage } from "../types/document.js";
 import { normalizePage } from "./normalize.js";
 
 // Idempotent — profiler/index.ts sets the same value at module load
@@ -43,18 +43,10 @@ export async function parse(
     const page = await doc.getPage(pageNum);
     const textContent = await page.getTextContent();
 
-    const textItems: TextItem[] = [];
     let rawText = "";
 
     for (const item of textContent.items as object[]) {
       if (!isTextItem(item)) continue;
-      textItems.push({
-        x: item.transform[4] ?? 0,
-        y: item.transform[5] ?? 0,
-        width: item.width,
-        height: item.height,
-        text: item.str,
-      });
       rawText += item.str;
       rawText += item.hasEOL ? "\n" : " ";
     }
@@ -78,7 +70,7 @@ export async function parse(
       detectedPositions.push({ ozNumber: trimmed, lineStart: i, lineEnd });
     }
 
-    pages.push({ pageNumber: pageNum, rawText, cleanedText, textItems, detectedPositions });
+    pages.push({ pageNumber: pageNum, rawText, cleanedText, detectedPositions });
 
     if (pageNum % 50 === 0) {
       log.info(

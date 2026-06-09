@@ -1,29 +1,27 @@
 import type { DocumentStrategy } from "../types/chunk.js";
 
-// OZ position patterns for different LV document formats
-const OZ_FAHRRADGARAGEN = /\d{2}\.\d{2}\.\d{4}/g;
-const OZ_SALZBURG_ROOM = /[A-Z]{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2}/g;
-const OZ_SALZBURG_VORB = /00\.00\.00\.\d{2}\.\d{2}/g;
-const COLUMN_NOISE = /EUR\s+(PP|EP|SO|ST)\s+EUR/;
-const LIGATURE_ARTIFACTS = /instal{1,2}a[oi]n|o[fﬃ]{1,3}ce|publica[oi]n/i;
+// Numeric 3-segment OZ: 01.01.0010 (Fahrradgaragen-style)
+const OZ_NUMERIC_RE = /\d{2}\.\d{2}\.\d{4}/g;
+// 5-segment alphanumeric OZ: GU.07.01.01.01 (Salzburg room positions)
+const OZ_5PART_RE = /[A-Z]{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2}/g;
+// 5-segment preamble OZ: 00.00.00.09.01 (Salzburg vorbemerkungen)
+const OZ_PREAMBLE_RE = /00\.00\.00\.\d{2}\.\d{2}/g;
+// LV pricing table header artifact: "EUR PP EUR", "EUR EP EUR" etc.
+const LV_PRICING_TABLE_RE = /EUR\s+(PP|EP|SO|ST)\s+EUR/;
 
 export function countOzPositions(text: string): number {
   return (
-    (text.match(OZ_FAHRRADGARAGEN) ?? []).length +
-    (text.match(OZ_SALZBURG_ROOM) ?? []).length
+    (text.match(OZ_NUMERIC_RE) ?? []).length +
+    (text.match(OZ_5PART_RE) ?? []).length
   );
 }
 
 export function countVorbemerkungen(text: string): number {
-  return (text.match(OZ_SALZBURG_VORB) ?? []).length;
+  return (text.match(OZ_PREAMBLE_RE) ?? []).length;
 }
 
 export function hasColumnNoise(text: string): boolean {
-  return COLUMN_NOISE.test(text);
-}
-
-export function hasLigatureArtifacts(text: string): boolean {
-  return LIGATURE_ARTIFACTS.test(text);
+  return LV_PRICING_TABLE_RE.test(text);
 }
 
 export function detectStrategy(
