@@ -4,8 +4,15 @@ import type { Chunk } from "../../types/chunk.js";
 import { slugify } from "../utils.js";
 import { exceedsTokenLimit } from "../guard.js";
 
-// All-caps section headings, e.g. "INSTALLATION", "MAINTENANCE", "CONTRACT HEALTH & SAFETY"
-const SECTION_HEADING_RE = /^([A-Z][A-Z\s&]{3,})$/;
+// All-caps: "INSTALLATION", "CONTRACT HEALTH & SAFETY"
+const HEADING_ALLCAPS_RE = /^[A-Z][A-Z\s&]{3,}$/;
+// Numbered heading (German/mixed): "1. Allgemeine Anforderungen", "2.1 Technische Spezifikationen"
+const HEADING_NUMBERED_RE = /^\d{1,2}(?:\.\d{1,2})?\s+[A-ZÀ-ɏ].{2,}$/;
+
+function isHeading(text: string): boolean {
+  if (text.length > 60 || /[.,;]$/.test(text)) return false;
+  return HEADING_ALLCAPS_RE.test(text) || HEADING_NUMBERED_RE.test(text);
+}
 
 // Numbered list item — the number sits alone on its line: "1." or "10."
 const NUMBERED_ITEM_RE = /^(\d{1,2})\.\s*$/;
@@ -37,7 +44,7 @@ function splitIntoSections(lines: Line[], startPage: number): Section[] {
   let current: Section = { heading: "Administrative Requirements", startPage, lines: [] };
 
   for (const line of lines) {
-    if (SECTION_HEADING_RE.test(line.text) && line.text.length <= 60) {
+    if (isHeading(line.text)) {
       if (current.lines.length > 0) sections.push(current);
       current = { heading: line.text, startPage: line.pageNumber, lines: [] };
     } else {

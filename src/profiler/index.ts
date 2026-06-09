@@ -10,6 +10,7 @@ import {
   hasColumnNoise,
   detectStrategy,
   detectRepeatedHeaders,
+  pageHasPreambleOz,
 } from "./detect.js";
 
 // Node.js has no browser worker context. Empty string puts pdfjs into fake-worker mode
@@ -53,6 +54,30 @@ function samplePageNumbers(pageCount: number): number[] {
   return [...first, ...middle, ...last];
 }
 
+// For "mixed" documents: find the page just before preamble OZ codes stop appearing.
+// Scans sampled pages in order; returns (firstNonPreambleSampled - 1) so the preamble
+// strategy receives all preamble pages even if the exact boundary falls between samples.
+function detectPreambleBoundary(
+  pageNumbers: number[],
+  rawPageTexts: string[],
+): number | null {
+  let lastPreambleSampled: number | null = null;
+  let firstNonPreambleSampled: number | null = null;
+
+  for (let i = 0; i < pageNumbers.length; i++) {
+    const pageNum = pageNumbers[i]!;
+    if (pageHasPreambleOz(rawPageTexts[i]!)) {
+      lastPreambleSampled = pageNum;
+    } else if (lastPreambleSampled !== null && firstNonPreambleSampled === null) {
+      firstNonPreambleSampled = pageNum;
+    }
+  }
+
+  if (lastPreambleSampled === null) return null;
+  // Use the page just before the first non-preamble sample; if none found, use last seen.
+  return firstNonPreambleSampled !== null ? firstNonPreambleSampled - 1 : lastPreambleSampled;
+}
+
 export async function profile(filePath: string, log: Logger): Promise<DocumentProfile> {
   const source_file = basename(filePath);
   log.info({ source_file }, "profiler: opening PDF");
@@ -93,6 +118,11 @@ export async function profile(filePath: string, log: Logger): Promise<DocumentPr
     : columnNoiseDetected ? "medium"
     : "high";
 
+  const preambleBoundaryPage =
+    suggestedStrategy === "mixed"
+      ? detectPreambleBoundary(pageNumbers, rawPageTexts)
+      : null;
+
   const result: DocumentProfile = {
     filename: source_file,
     pageCount,
@@ -104,6 +134,7 @@ export async function profile(filePath: string, log: Logger): Promise<DocumentPr
     repeatedHeaderLines,
     suggestedStrategy,
     parserConfidence,
+    preambleBoundaryPage,
   };
 
   log.info(
@@ -118,6 +149,7 @@ export async function profile(filePath: string, log: Logger): Promise<DocumentPr
       ligatureCorruptionRate: ligatureCorruptionRate.toFixed(5),
       repeatedHeaders: repeatedHeaderLines.length,
       sampledPages: pageNumbers.length,
+      preambleBoundaryPage,
     },
     "profiler: complete"
   );

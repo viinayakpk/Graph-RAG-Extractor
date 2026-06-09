@@ -24,4 +24,7 @@ export interface DocumentProfile {
   repeatedHeaderLines: string[];
   suggestedStrategy: DocumentStrategy;
   parserConfidence: "high" | "medium" | "low";
+  // Last page containing a vorbemerkungen OZ code, derived from the profiler sample.
+  // The "mixed" chunker uses this to split preamble from room-position pages.
+  preambleBoundaryPage: number | null;
 }

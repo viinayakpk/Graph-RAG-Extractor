@@ -8,8 +8,10 @@ export interface Group {
   requirements: ConsolidatedRequirement[];
 }
 
-const FAHRRAD_OZ_RE = /^(\d{2})\.(\d{2})\.\d{4}$/;
-const SALZBURG_OZ_RE = /^[A-Z]{2}\.(\d{2})\.(\d{2})\.\d{2}\.\d{2}$/;
+// 3-segment numeric OZ: capture group(01) and subgroup(02) from 01.02.0030
+const OZ_3PART_RE = /^(\d{2})\.(\d{2})\.\d{4}$/;
+// 5-segment alphanumeric OZ: capture room(07) and category(09) from GU.07.09.01.01
+const OZ_5PART_ALPHA_RE = /^[A-Z]{2}\.(\d{2})\.(\d{2})\.\d{2}\.\d{2}$/;
 
 // Derive L1/L2 grouping keys from a consolidated requirement.
 // Priority: category_code (Salzburg) → numeric OZ prefix (Fahrradgaragen) → section_heading (Christmas) → fallback
@@ -25,7 +27,7 @@ function l1l2From(req: ConsolidatedRequirement): { l1Key: string; l1Label: strin
   }
 
   // Fahrradgaragen: numeric OZ like 01.02.0030 → L1 = group 01, L2 = subgroup 01.02
-  const fahrradMatch = req.item_number ? FAHRRAD_OZ_RE.exec(req.item_number) : null;
+  const fahrradMatch = req.item_number ? OZ_3PART_RE.exec(req.item_number) : null;
   if (fahrradMatch) {
     const grp = fahrradMatch[1]!;
     const sub = fahrradMatch[2]!;
@@ -39,7 +41,7 @@ function l1l2From(req: ConsolidatedRequirement): { l1Key: string; l1Label: strin
   }
 
   // Salzburg room positions without category_code (shouldn't happen, but covered)
-  const salzburgMatch = req.item_number ? SALZBURG_OZ_RE.exec(req.item_number) : null;
+  const salzburgMatch = req.item_number ? OZ_5PART_ALPHA_RE.exec(req.item_number) : null;
   if (salzburgMatch) {
     const room = salzburgMatch[1]!;
     const cat = salzburgMatch[2]!;

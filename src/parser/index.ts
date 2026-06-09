@@ -4,15 +4,10 @@ import type { Logger } from "pino";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import type { DocumentProfile, ParsedDocument, ParsedPage } from "../types/document.js";
 import { normalizePage } from "./normalize.js";
+import { OZ_LINE_RE } from "./oz-patterns.js";
 
 // Idempotent — profiler/index.ts sets the same value at module load
 GlobalWorkerOptions.workerSrc = "";
-
-// Matches the three OZ position formats we care about (exact full-line match)
-// Fahrradgaragen:  01.01.0010
-// Salzburg rooms:  GU.07.01.01.01
-// Salzburg vorb:   00.00.00.09.01
-const OZ_LINE_RE = /^(?:\d{2}\.\d{2}\.\d{4}|[A-Z]{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2}|00\.00\.00\.\d{2}\.\d{2})$/;
 
 interface PdfjsTextItem {
   str: string;

@@ -17,4 +17,5 @@ export const DocumentProfileSchema: z.ZodType<DocumentProfile> = z.object({
     "mixed",
   ]),
   parserConfidence: z.enum(["high", "medium", "low"]),
+  preambleBoundaryPage: z.number().int().positive().nullable(),
 });

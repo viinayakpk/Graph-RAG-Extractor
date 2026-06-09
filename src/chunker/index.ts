@@ -23,8 +23,10 @@ export async function chunk(
       return preambleStrategy(doc, log);
 
     case "mixed": {
-      const preamblePages = doc.pages.filter((p) => p.pageNumber <= 61);
-      const roomPages = doc.pages.filter((p) => p.pageNumber > 61);
+      const boundary = profile.preambleBoundaryPage ?? Math.floor(doc.pageCount * 0.15);
+      log.info({ boundary, preambleBoundaryPage: profile.preambleBoundaryPage }, "mixed chunker: using preamble boundary");
+      const preamblePages = doc.pages.filter((p) => p.pageNumber <= boundary);
+      const roomPages = doc.pages.filter((p) => p.pageNumber > boundary);
       const preambleDoc = { ...doc, pages: preamblePages };
       const roomDoc = { ...doc, pages: roomPages };
       const [preambleChunks, roomChunks] = await Promise.all([

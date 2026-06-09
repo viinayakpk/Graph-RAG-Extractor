@@ -1,36 +1,43 @@
 import type { DocumentStrategy } from "../types/chunk.js";
+import {
+  OZ_3PART_RE,
+  OZ_5PART_ALPHA_RE,
+  OZ_VORBEMERKUNGEN_RE,
+  countOzMatches,
+} from "../parser/oz-patterns.js";
 
-// Numeric 3-segment OZ: 01.01.0010 (Fahrradgaragen-style)
-const OZ_NUMERIC_RE = /\d{2}\.\d{2}\.\d{4}/g;
-// 5-segment alphanumeric OZ: GU.07.01.01.01 (Salzburg room positions)
-const OZ_5PART_RE = /[A-Z]{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2}/g;
-// 5-segment preamble OZ: 00.00.00.09.01 (Salzburg vorbemerkungen)
-const OZ_PREAMBLE_RE = /00\.00\.00\.\d{2}\.\d{2}/g;
 // LV pricing table header artifact: "EUR PP EUR", "EUR EP EUR" etc.
 const LV_PRICING_TABLE_RE = /EUR\s+(PP|EP|SO|ST)\s+EUR/;
 
+// Minimum OZ position count for a document to be classified as lv-position or mixed
+const MIN_LV_POSITIONS_FOR_STRATEGY = 5;
+// Minimum vorbemerkungen entry count to indicate a real preamble section vs. incidental use
+const MIN_VORBEMERKUNGEN_FOR_STRATEGY = 10;
+
 export function countOzPositions(text: string): number {
-  return (
-    (text.match(OZ_NUMERIC_RE) ?? []).length +
-    (text.match(OZ_5PART_RE) ?? []).length
-  );
+  return countOzMatches(text, OZ_3PART_RE) + countOzMatches(text, OZ_5PART_ALPHA_RE);
 }
 
 export function countVorbemerkungen(text: string): number {
-  return (text.match(OZ_PREAMBLE_RE) ?? []).length;
+  return countOzMatches(text, OZ_VORBEMERKUNGEN_RE);
 }
 
 export function hasColumnNoise(text: string): boolean {
   return LV_PRICING_TABLE_RE.test(text);
 }
 
+// Test whether a single page's text contains any vorbemerkungen OZ code
+export function pageHasPreambleOz(text: string): boolean {
+  return OZ_VORBEMERKUNGEN_RE.test(text);
+}
+
 export function detectStrategy(
   lvPositionCount: number,
   vorbemerkungenEstimate: number,
 ): DocumentStrategy {
-  if (lvPositionCount > 5 && vorbemerkungenEstimate > 10) return "mixed";
-  if (lvPositionCount > 5) return "lv-position";
-  if (vorbemerkungenEstimate > 10) return "vorbemerkungen-heavy";
+  if (lvPositionCount > MIN_LV_POSITIONS_FOR_STRATEGY && vorbemerkungenEstimate > MIN_VORBEMERKUNGEN_FOR_STRATEGY) return "mixed";
+  if (lvPositionCount > MIN_LV_POSITIONS_FOR_STRATEGY) return "lv-position";
+  if (vorbemerkungenEstimate > MIN_VORBEMERKUNGEN_FOR_STRATEGY) return "vorbemerkungen-heavy";
   return "section-list";
 }
 

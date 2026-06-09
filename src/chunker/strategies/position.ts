@@ -3,12 +3,11 @@ import type { ParsedDocument } from "../../types/document.js";
 import type { Chunk } from "../../types/chunk.js";
 import { slugify } from "../utils.js";
 import { isEntfallt } from "../guard.js";
+import { OZ_3PART_RE, OZ_5PART_ALPHA_RE } from "../../parser/oz-patterns.js";
 
-// Full OZ position — must match the entire trimmed line (no partial matches)
-// Fahrradgaragen: 01.01.0010
-// Salzburg rooms: GU.07.01.01.01
-const OZ_FAHRRAD_RE = /^(\d{2}\.\d{2}\.\d{4})$/;
-const OZ_SALZBURG_RE = /^([A-Z]{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2})$/;
+// Anchored wrappers — must match the entire trimmed line, no partial matches
+const OZ_3PART_LINE_RE = new RegExp(`^(${OZ_3PART_RE.source})$`);
+const OZ_5PART_ALPHA_LINE_RE = new RegExp(`^(${OZ_5PART_ALPHA_RE.source})$`);
 
 // Salzburg Obergruppe code: third dot-separated segment of a 5-part OZ
 // GU.07.09.01.01 → split(".") → index 2 → "09"
@@ -65,8 +64,8 @@ export function positionStrategy(doc: ParsedDocument, log: Logger): Chunk[] {
   };
 
   for (const { text, pageNumber } of allLines) {
-    const fahrradMatch = OZ_FAHRRAD_RE.exec(text);
-    const salzburgMatch = OZ_SALZBURG_RE.exec(text);
+    const fahrradMatch = OZ_3PART_LINE_RE.exec(text);
+    const salzburgMatch = OZ_5PART_ALPHA_LINE_RE.exec(text);
     const oz = (fahrradMatch ?? salzburgMatch)?.[1];
 
     if (oz) {
