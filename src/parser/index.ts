@@ -47,7 +47,11 @@ export async function parse(
     }
     rawText = rawText.trimEnd();
 
-    const cleanedText = normalizePage(rawText, documentProfile.repeatedHeaderLines);
+    const cleanedText = normalizePage(rawText, documentProfile.repeatedHeaderLines, {
+      // LV pricing-table noise only exists in Leistungsverzeichnis tenders, not
+      // in prose (section-list) documents like the English tender.
+      stripLvTableNoise: documentProfile.suggestedStrategy !== "section-list",
+    });
 
     const lines = cleanedText.split("\n");
     const detectedPositions: ParsedPage["detectedPositions"] = [];

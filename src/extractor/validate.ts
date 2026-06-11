@@ -1,67 +1,80 @@
 import type { Logger } from "pino";
-import { ChunkExtractionArraySchema } from "../schemas/requirement.js";
+import {
+  LlmExtractionArraySchema,
+  LlmExtractionItemSchema,
+  type LlmExtractionItem,
+} from "../schemas/requirement.js";
+import type { Chunk } from "../types/chunk.js";
 import type { ChunkExtraction } from "../types/requirement.js";
 
-// Placeholder inserted when all recovery tiers fail — never silently drops a chunk
-export function makePlaceholder(chunkId: string, sourceFile: string): ChunkExtraction {
+// Attach chunker-supplied structural metadata to validated model content. The
+// chunker is authoritative for which chunk / file / page / section a requirement
+// came from, and for the OZ code and category derived from document structure —
+// so we take those from the chunk and only fall back to the model's value where
+// the chunk has none (e.g. a numbered item inside a free-text section).
+function enrich(item: LlmExtractionItem, chunk: Chunk): ChunkExtraction {
   return {
-    chunk_id: chunkId,
-    source_file: sourceFile,
-    page_number: "unknown",
-    section_heading: null,
-    bullet_point: `LOW_CONFIDENCE_PLACEHOLDER: ${chunkId}`,
-    description_en: "Extraction failed after all recovery attempts. Manual review required.",
-    description_de: null,
-    priority: "must",
-    equivalence_allowed: null,
-    confidence: "low",
-    standards: [],
-    referenced_annexes: [],
-    cross_referenced_positions: [],
-    category_code: null,
-    item_number: null,
+    chunk_id: chunk.chunk_id,
+    source_file: chunk.source_file,
+    page_number: chunk.page_number,
+    section_heading: chunk.section_heading,
+    bullet_point: item.bullet_point,
+    description_en: item.description_en,
+    description_de: item.description_de,
+    priority: item.priority,
+    equivalence_allowed: item.equivalence_allowed,
+    confidence: item.confidence,
+    standards: item.standards,
+    referenced_annexes: item.referenced_annexes,
+    cross_referenced_positions: item.cross_referenced_positions,
+    category_code: chunk.category_code ?? item.category_code,
+    item_number: chunk.lv_position ?? item.item_number,
   };
 }
 
-// Tier 1: validate full LLM response as ChunkExtraction[]
+// Tier 1: validate the whole array of model items, then enrich. Returns [] (rather
+// than throwing) so the caller can fall through to per-item recovery.
 export function validateExtractions(
-  raw: unknown,
-  chunkId: string,
-  sourceFile: string,
-  log: Logger
+  rawItems: unknown[],
+  chunk: Chunk,
+  log: Logger,
 ): ChunkExtraction[] {
-  try {
-    const parsed = ChunkExtractionArraySchema.parse(raw);
-    return parsed.map((e) => ({ ...e, chunk_id: chunkId, source_file: sourceFile }));
-  } catch (err) {
-    log.warn(
-      { chunk_id: chunkId, source_file: sourceFile, err },
-      "Zod validation failed on full response — entering Tier 2 recovery"
-    );
-    return [];
+  const result = LlmExtractionArraySchema.safeParse(rawItems);
+  if (result.success) {
+    return result.data.map((item) => enrich(item, chunk));
   }
+  log.warn(
+    {
+      chunk_id: chunk.chunk_id,
+      source_file: chunk.source_file,
+      issues: result.error.issues.length,
+    },
+    "Tier 1 validation failed — entering Tier 2 per-item recovery",
+  );
+  return [];
 }
 
-// Tier 2: attempt to pull any valid items from a possibly-partial array
+// Tier 2: keep whatever individual items are well-formed and drop the rest. A
+// single malformed item should not discard the good requirements beside it.
 export function recoverPartialExtractions(
-  items: unknown[],
-  chunkId: string,
-  sourceFile: string,
-  log: Logger
+  rawItems: unknown[],
+  chunk: Chunk,
+  log: Logger,
 ): ChunkExtraction[] {
   const recovered: ChunkExtraction[] = [];
-  for (const item of items) {
-    try {
-      const parsed = ChunkExtractionArraySchema.parse([item]);
-      recovered.push({ ...parsed[0]!, chunk_id: chunkId, source_file: sourceFile });
-    } catch {
-      // skip invalid items
-    }
+  for (const item of rawItems) {
+    const result = LlmExtractionItemSchema.safeParse(item);
+    if (result.success) recovered.push(enrich(result.data, chunk));
   }
   if (recovered.length > 0) {
     log.warn(
-      { chunk_id: chunkId, source_file: sourceFile, recovered: recovered.length },
-      "Tier 2 partial recovery succeeded"
+      {
+        chunk_id: chunk.chunk_id,
+        source_file: chunk.source_file,
+        recovered: recovered.length,
+        of: rawItems.length,
+      },
+      "Tier 2 partial recovery succeeded",
     );
   }
   return recovered;

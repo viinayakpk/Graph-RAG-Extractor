@@ -14,7 +14,8 @@ export type MergeRule =
   | "vorbemerkungen-category"
   | "standard-reference"
   | "staging-dedup"
-  | "embedding-similarity";
+  | "embedding-similarity"
+  | "standalone";
 
 export interface EvidenceLink {
   chunkId: string;

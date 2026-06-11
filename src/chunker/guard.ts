@@ -1,17 +1,15 @@
-const ENTFALLT_RE = /Entf[äa]llt/i;
+import { extractionConfig } from "../config.js";
 
-// Rough token estimate: 4 chars ≈ 1 token
-const CHARS_PER_TOKEN = 4;
-const TOKEN_LIMIT = 3000;
+const ENTFALLT_RE = /Entf[äa]llt/i;
 
 export function isEntfallt(content: string): boolean {
   return ENTFALLT_RE.test(content);
 }
 
 export function estimateTokens(content: string): number {
-  return Math.ceil(content.length / CHARS_PER_TOKEN);
+  return Math.ceil(content.length / extractionConfig.charsPerToken);
 }
 
 export function exceedsTokenLimit(content: string): boolean {
-  return estimateTokens(content) > TOKEN_LIMIT;
+  return estimateTokens(content) > extractionConfig.maxChunkTokens;
 }

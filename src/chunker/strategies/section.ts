@@ -3,6 +3,7 @@ import type { ParsedDocument } from "../../types/document.js";
 import type { Chunk } from "../../types/chunk.js";
 import { slugify } from "../utils.js";
 import { exceedsTokenLimit } from "../guard.js";
+import { chunkerConfig } from "../../config.js";
 
 // All-caps: "INSTALLATION", "CONTRACT HEALTH & SAFETY"
 const HEADING_ALLCAPS_RE = /^[A-Z][A-Z\s&]{3,}$/;
@@ -10,7 +11,7 @@ const HEADING_ALLCAPS_RE = /^[A-Z][A-Z\s&]{3,}$/;
 const HEADING_NUMBERED_RE = /^\d{1,2}(?:\.\d{1,2})?\s+[A-ZÀ-ɏ].{2,}$/;
 
 function isHeading(text: string): boolean {
-  if (text.length > 60 || /[.,;]$/.test(text)) return false;
+  if (text.length > chunkerConfig.maxHeadingLength || /[.,;]$/.test(text)) return false;
   return HEADING_ALLCAPS_RE.test(text) || HEADING_NUMBERED_RE.test(text);
 }
 
@@ -41,7 +42,7 @@ interface Section {
 
 function splitIntoSections(lines: Line[], startPage: number): Section[] {
   const sections: Section[] = [];
-  let current: Section = { heading: "Administrative Requirements", startPage, lines: [] };
+  let current: Section = { heading: chunkerConfig.defaultSectionHeading, startPage, lines: [] };
 
   for (const line of lines) {
     if (isHeading(line.text)) {

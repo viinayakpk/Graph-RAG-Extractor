@@ -5,14 +5,10 @@ import {
   OZ_VORBEMERKUNGEN_RE,
   countOzMatches,
 } from "../parser/oz-patterns.js";
+import { strategyConfig, profilerConfig } from "../config.js";
 
 // LV pricing table header artifact: "EUR PP EUR", "EUR EP EUR" etc.
 const LV_PRICING_TABLE_RE = /EUR\s+(PP|EP|SO|ST)\s+EUR/;
-
-// Minimum OZ position count for a document to be classified as lv-position or mixed
-const MIN_LV_POSITIONS_FOR_STRATEGY = 5;
-// Minimum vorbemerkungen entry count to indicate a real preamble section vs. incidental use
-const MIN_VORBEMERKUNGEN_FOR_STRATEGY = 10;
 
 export function countOzPositions(text: string): number {
   return countOzMatches(text, OZ_3PART_RE) + countOzMatches(text, OZ_5PART_ALPHA_RE);
@@ -35,9 +31,11 @@ export function detectStrategy(
   lvPositionCount: number,
   vorbemerkungenEstimate: number,
 ): DocumentStrategy {
-  if (lvPositionCount > MIN_LV_POSITIONS_FOR_STRATEGY && vorbemerkungenEstimate > MIN_VORBEMERKUNGEN_FOR_STRATEGY) return "mixed";
-  if (lvPositionCount > MIN_LV_POSITIONS_FOR_STRATEGY) return "lv-position";
-  if (vorbemerkungenEstimate > MIN_VORBEMERKUNGEN_FOR_STRATEGY) return "vorbemerkungen-heavy";
+  const hasPositions = lvPositionCount > strategyConfig.minOzPositions;
+  const hasPreamble = vorbemerkungenEstimate > strategyConfig.minVorbemerkungen;
+  if (hasPositions && hasPreamble) return "mixed";
+  if (hasPositions) return "lv-position";
+  if (hasPreamble) return "vorbemerkungen-heavy";
   return "section-list";
 }
 
@@ -53,7 +51,7 @@ export function detectRepeatedHeaders(pageTexts: string[]): string[] {
       }
     }
   }
-  const threshold = pageTexts.length * 0.6;
+  const threshold = pageTexts.length * profilerConfig.repeatedHeaderPageFraction;
   return [...lineFrequency.entries()]
     .filter(([, count]) => count >= threshold)
     .map(([line]) => line);
