@@ -9,12 +9,9 @@ export type EvidenceRole =
   | "cross_reference";
 
 export type MergeRule =
-  | "cross-reference"
   | "lv-position-match"
   | "vorbemerkungen-category"
-  | "standard-reference"
   | "staging-dedup"
-  | "embedding-similarity"
   | "standalone";
 
 export interface EvidenceLink {
