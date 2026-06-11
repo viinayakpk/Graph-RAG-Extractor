@@ -12,6 +12,7 @@ import {
   detectRepeatedHeaders,
   pageHasPreambleOz,
 } from "./detect.js";
+import { profilerConfig } from "../config.js";
 
 // Node.js has no browser worker context. Empty string puts pdfjs into fake-worker mode
 // (synchronous, main-thread execution), which is correct for server-side text extraction.
@@ -20,7 +21,7 @@ GlobalWorkerOptions.workerSrc = "";
 // Unicode ligature characters — raw presence in PDF text measures normalization burden
 const LIGATURE_RE = /[ﬀﬁﬂﬃﬄﬅﬆ]/g;
 
-const SAMPLE_SIZE = 30;
+const SAMPLE_SIZE = profilerConfig.sampleSize;
 
 // pdfjs TextItem has 'str' + 'hasEOL'; TextMarkedContent has 'type'. Distinguish by 'str'.
 interface PdfjsTextItem {
@@ -113,7 +114,7 @@ export async function profile(filePath: string, log: Logger): Promise<DocumentPr
   const suggestedStrategy = detectStrategy(lvPositionCount, vorbemerkungenPagesEstimate);
 
   const parserConfidence: "high" | "medium" | "low" =
-    ligatureCorruptionRate > 0.01 ? "low"
+    ligatureCorruptionRate > profilerConfig.ligatureCorruptionLowConfidence ? "low"
     : columnNoiseDetected ? "medium"
     : "high";
 
