@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
+import { ChunkExtractionArraySchema } from "../schemas/requirement.js";
 import type { ChunkExtraction } from "../types/requirement.js";
 
 export async function readCache(
@@ -8,7 +9,9 @@ export async function readCache(
 ): Promise<ChunkExtraction[] | null> {
   try {
     const raw = await readFile(join(cacheDir, `${chunkId}.json`), "utf-8");
-    return JSON.parse(raw) as ChunkExtraction[];
+    // Validate on read: a missing, stale, or corrupt cache file falls through to
+    // re-extraction rather than flowing unchecked into the tree.
+    return ChunkExtractionArraySchema.parse(JSON.parse(raw));
   } catch {
     return null;
   }
