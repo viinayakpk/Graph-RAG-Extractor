@@ -48,12 +48,9 @@ export const ConsolidatedRequirementSchema: z.ZodType<ConsolidatedRequirement> =
     source_chunk_ids: z.array(z.string()).min(1),
     merge_record: z.object({
       rule: z.enum([
-        "cross-reference",
         "lv-position-match",
         "vorbemerkungen-category",
-        "standard-reference",
         "staging-dedup",
-        "embedding-similarity",
         "standalone",
       ]),
       mergeConfidence: z.enum(["high", "medium", "low"]),

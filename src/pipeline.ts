@@ -8,6 +8,7 @@ import { chunk } from "./chunker/index.js";
 import { extract } from "./extractor/index.js";
 import { consolidate } from "./consolidator/index.js";
 import { buildTree } from "./builder/index.js";
+import { ProcurementMatchDeliverableSchema } from "./schemas/tree.js";
 
 export interface PipelineOptions {
   force: boolean;
@@ -43,8 +44,10 @@ export async function runPipeline(
   log.info({ requirementCount: consolidated.length }, "consolidator done");
 
   const tree = buildTree(consolidated, documentProfile.filename, log);
+  // Fail loudly if the assembled tree does not match the deliverable contract.
+  ProcurementMatchDeliverableSchema.parse(tree);
   const leafCount = countLeaves([tree]);
-  log.info({ leafCount }, "builder done");
+  log.info({ leafCount }, "builder done, tree validated");
 
   return { chunks, extractions, consolidated, tree, stats: { leafCount } };
 }
