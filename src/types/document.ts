@@ -2,9 +2,7 @@ import type { DocumentStrategy } from "./chunk.js";
 
 export interface ParsedPage {
   pageNumber: number;
-  rawText: string;
   cleanedText: string;
-  detectedPositions: Array<{ ozNumber: string; lineStart: number; lineEnd: number }>;
 }
 
 export interface ParsedDocument {

@@ -1,7 +1,7 @@
 import { readFile } from "fs/promises";
 import { basename } from "path";
 import type { Logger } from "pino";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import { getDocument } from "../parser/pdfjs.js";
 import type { DocumentProfile } from "../types/document.js";
 import { normalizePage } from "../parser/normalize.js";
 import {
@@ -13,10 +13,6 @@ import {
   pageHasPreambleOz,
 } from "./detect.js";
 import { profilerConfig } from "../config.js";
-
-// Node.js has no browser worker context. Empty string puts pdfjs into fake-worker mode
-// (synchronous, main-thread execution), which is correct for server-side text extraction.
-GlobalWorkerOptions.workerSrc = "";
 
 // Unicode ligature characters — raw presence in PDF text measures normalization burden
 const LIGATURE_RE = /[ﬀﬁﬂﬃﬄﬅﬆ]/g;
