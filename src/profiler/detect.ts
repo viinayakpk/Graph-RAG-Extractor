@@ -22,11 +22,6 @@ export function hasColumnNoise(text: string): boolean {
   return LV_PRICING_TABLE_RE.test(text);
 }
 
-// Test whether a single page's text contains any vorbemerkungen OZ code
-export function pageHasPreambleOz(text: string): boolean {
-  return OZ_VORBEMERKUNGEN_RE.test(text);
-}
-
 export function detectStrategy(
   lvPositionCount: number,
   vorbemerkungenEstimate: number,
