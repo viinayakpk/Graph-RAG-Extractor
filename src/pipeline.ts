@@ -7,6 +7,8 @@ import { parse } from "./parser/index.js";
 import { chunk } from "./chunker/index.js";
 import { extract } from "./extractor/index.js";
 import { consolidate } from "./consolidator/index.js";
+import { linkSemantic } from "./consolidator/semantic-link.js";
+import { verifyGrounding } from "./consolidator/grounding.js";
 import { buildTree } from "./builder/index.js";
 import { ProcurementMatchDeliverableSchema } from "./schemas/tree.js";
 
@@ -43,13 +45,23 @@ export async function runPipeline(
   const consolidated = consolidate(extractions, log);
   log.info({ requirementCount: consolidated.length }, "consolidator done");
 
-  const tree = buildTree(consolidated, documentProfile.filename, log);
+  // Semantic linking: pull a deliverable's scattered pieces onto one leaf when no
+  // position code or exact text connects them (the brief's headline case). Gated
+  // so it can never fuse two distinct priced positions.
+  const linked = await linkSemantic(consolidated, log);
+  log.info({ before: consolidated.length, after: linked.length }, "semantic linking done");
+
+  // Faithfulness gate: verify every numeric value in a leaf's English description
+  // is present in its source chunks; honestly drop confidence to "low" otherwise.
+  const { requirements: verified } = verifyGrounding(linked, chunks, log);
+
+  const tree = await buildTree(verified, documentProfile.filename, log);
   // Fail loudly if the assembled tree does not match the deliverable contract.
   ProcurementMatchDeliverableSchema.parse(tree);
   const leafCount = countLeaves([tree]);
   log.info({ leafCount }, "builder done, tree validated");
 
-  return { chunks, extractions, consolidated, tree, stats: { leafCount } };
+  return { chunks, extractions, consolidated: verified, tree, stats: { leafCount } };
 }
 
 function countLeaves(nodes: ProcurementMatchDeliverable[]): number {
