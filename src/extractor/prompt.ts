@@ -1,44 +1,53 @@
 import type { DocumentRegion } from "../types/chunk.js";
 
-export const PROMPT_VERSION = "1.2";
+export const PROMPT_VERSION = "2.0";
 
-// JSON shape the LLM must return — defined once, not repeated per document type
-const EXTRACTION_SCHEMA = `Return a JSON object with key "extractions" containing an array of objects.
-Each object must have:
-- bullet_point: short imperative title (max 80 chars, English)
-- description_en: full English description of this specific requirement
-- description_de: original German text verbatim, or null if source is English
-- priority: "must" | "should" | "optional"
-- equivalence_allowed: true if "oder gleichwertig" / "or equivalent" is present, false if exact spec required, null if the source is silent
-- confidence: "high" | "medium" | "low"
-- standards: array of DIN/EN/ISO/ÖNORM codes referenced, empty array if none
-- referenced_annexes: array of annex or plan references, empty array if none
-- cross_referenced_positions: array of OZ position numbers explicitly mentioned, empty array if none
-- category_code: string | null (see document context below)
-- item_number: string | null (see document context below)`;
+// The fields the model returns — requirement *content* only. Structural metadata
+// (which chunk / page / position / category) is authoritative from the chunker
+// and attached during enrichment, so it is not requested here.
+const EXTRACTION_SCHEMA = `Return a JSON object with key "extractions": an array of objects.
+Each object has:
+- bullet_point: a short imperative title in English (max 80 chars)
+- description_en: a full English description of this single requirement
+- description_de: the requirement's text verbatim in the document's original language, or null if the source is already English
+- priority: "must" (mandatory — must / shall / required / has to), "should" (recommended), or "optional" (may / nice to have)
+- equivalence_allowed: true if an equivalent is explicitly accepted (e.g. "or equivalent", "oder gleichwertig", "ou équivalent", "o equivalente"), false if an exact product or spec is mandated, null if the source is silent
+- confidence: "high" | "medium" | "low" (use "low" when the requirement depends on an external drawing or annex you cannot see)
+- standards: array of referenced standard codes (e.g. DIN, EN, ISO, ÖNORM, ASTM, BS), [] if none
+- referenced_annexes: array of annex / plan / drawing references named in the text (e.g. "Annex A", "Ansicht [B]"), [] if none
+- cross_referenced_positions: array of other item / position codes the text explicitly names, [] if none
+- category_code: null unless the text itself states a category code
+- item_number: the item / position number if this block is a labelled item, otherwise null`;
 
-const BASE_INSTRUCTIONS = `You are a procurement analyst. Extract ALL requirements from the given text.
-Do not skip requirements because they seem administrative or minor — extract everything the buyer is asking for.
-Each distinct obligation becomes its own object in the array.
+const BASE_INSTRUCTIONS = `You are a procurement analyst extracting what a buyer requires from a tender, in any language.
+Extract EVERY requirement, specification, and obligation — administrative and technical alike; do not skip ones that seem minor.
+Each distinct obligation becomes its own object. Write bullet_point and description_en in English; keep the original wording in description_de.
+If the text contains no actual requirement (a heading, a table of contents, a form field, pricing boilerplate), return an empty "extractions" array.
 ${EXTRACTION_SCHEMA}`;
 
-// Structural guidance per document region — 2-4 lines, no schema duplication
+// Light, language-neutral guidance on how finely to split, by structural region.
 const DOCUMENT_CONTEXT: Record<DocumentRegion, string> = {
-  "lv-position": `This is an LV (Leistungsverzeichnis) position block identified by an OZ position code.
-Set item_number to the full OZ code (e.g. "01.01.0010" or "GU.07.09.01.01").
-For 5-segment Salzburg codes (e.g. GU.07.09.01.01) set category_code to the third segment ("09"). For numeric codes (e.g. 01.01.0010) set category_code to null.
-Set equivalence_allowed to true when "oder gleichwertig" appears.`,
-
-  "vorbemerkungen": `This is a Vorbemerkungen (preamble/general conditions) block from an Austrian LV tender, identified by OZ code 00.00.00.KK.II.
-These are general specifications that apply to all room positions in category KK.
-Set category_code to the KK segment (e.g. "09" from 00.00.00.09.01). Set item_number to null.
-Expect 2–6 distinct requirements per block — do not merge separate obligations into one entry.`,
-
-  "section": `This is a section from a procurement tender document.
-Set item_number to the numbered item identifier if the text uses a numbered list (e.g. "3" for item 3), otherwise null.
-Set category_code to null.`,
+  "lv-position": `This block is one line item / position: a primary deliverable plus its specifications. Extract the primary requirement and any distinct sub-obligations it states.`,
+  "vorbemerkungen": `This block is a general / preamble specification that applies to many items. Extract each distinct technical requirement as its own object — expect several.`,
+  "section": `This block is a section of prose or a numbered item. Extract each distinct obligation it contains.`,
 };
 
 export function buildSystemPrompt(region: DocumentRegion): string {
-  return `${BASE_INSTRUCTIONS}\n\n## Document context\n${DOCUMENT_CONTEXT[region]}`;
+  return `${BASE_INSTRUCTIONS}\n\n## This block\n${DOCUMENT_CONTEXT[region]}`;
+}
+
+// Second-pass "gleaner" for recall: re-read the same block having seen the first
+// pass's titles, and surface only obligations genuinely present in the text but
+// missing from that list. Multi-pass extraction is the standard high-recall
+// technique; the strict "only what is literally in the text, else empty" framing
+// plus downstream Zod validation and number-grounding keep it from inventing.
+const GLEANER_INSTRUCTIONS = `You are a procurement analyst re-checking a tender block for COMPLETENESS, in any language.
+A first pass already extracted requirements from this block; its bullet_points are listed below under "Already extracted".
+Return ONLY obligations or specifications that are genuinely stated in the block text but are MISSING from that list.
+Do NOT restate, rephrase, translate, or split items already listed. Do NOT add anything not literally supported by the text.
+If the first pass already captured everything, return an empty "extractions" array — that is the expected answer for most blocks.
+${EXTRACTION_SCHEMA}`;
+
+export function buildGleanerPrompt(region: DocumentRegion): string {
+  return `${GLEANER_INSTRUCTIONS}\n\n## This block\n${DOCUMENT_CONTEXT[region]}`;
 }

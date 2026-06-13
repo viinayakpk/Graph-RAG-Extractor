@@ -12,6 +12,7 @@ export type MergeRule =
   | "lv-position-match"
   | "vorbemerkungen-category"
   | "staging-dedup"
+  | "semantic-link"
   | "standalone";
 
 export interface EvidenceLink {

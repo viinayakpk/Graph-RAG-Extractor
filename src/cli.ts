@@ -4,6 +4,17 @@ import { basename, resolve } from "node:path";
 import pino from "pino";
 import { runPipeline } from "./pipeline.js";
 
+const log = pino({
+  level: process.env["LOG_LEVEL"] ?? "info",
+  transport: { target: "pino-pretty" },
+});
+
+async function writeArtifact(dir: string, name: string, data: unknown): Promise<void> {
+  const path = resolve(dir, name);
+  await writeFile(path, JSON.stringify(data, null, 2));
+  log.info({ path }, "wrote artifact");
+}
+
 async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
@@ -11,11 +22,6 @@ async function main(): Promise<void> {
       output: { type: "string", short: "o", default: "outputs" },
       force: { type: "boolean", short: "f", default: false },
     },
-  });
-
-  const log = pino({
-    level: process.env["LOG_LEVEL"] ?? "info",
-    transport: { target: "pino-pretty" },
   });
 
   if (!values.pdf?.length) {
@@ -27,23 +33,33 @@ async function main(): Promise<void> {
     const tenderName = basename(pdfPath, ".pdf").toLowerCase().replace(/\s+/g, "-");
     const outDir = resolve(values.output!, tenderName);
 
-    await mkdir(outDir, { recursive: true });
     await mkdir(resolve(outDir, "cache"), { recursive: true });
-
     log.info({ pdfPath, tenderName, outDir }, "pipeline starting");
 
     const result = await runPipeline(pdfPath, outDir, { force: values.force ?? false }, log);
 
-    await writeFile(resolve(outDir, "chunks.json"), JSON.stringify(result.chunks, null, 2));
-    await writeFile(resolve(outDir, "extractions.json"), JSON.stringify(result.extractions, null, 2));
-    await writeFile(resolve(outDir, "consolidated.json"), JSON.stringify(result.consolidated, null, 2));
-    await writeFile(resolve(outDir, "tree.json"), JSON.stringify(result.tree, null, 2));
+    await writeArtifact(outDir, "chunks.json", result.chunks);
+    await writeArtifact(outDir, "extractions.json", result.extractions);
+    await writeArtifact(outDir, "consolidated.json", result.consolidated);
+    await writeArtifact(outDir, "tree.json", result.tree);
 
-    log.info({ outDir, leafCount: result.stats.leafCount }, "pipeline complete");
+    log.info(
+      {
+        outDir,
+        chunks: result.chunks.length,
+        extractions: result.extractions.length,
+        requirements: result.consolidated.length,
+        leafCount: result.stats.leafCount,
+      },
+      "pipeline complete",
+    );
   }
 }
 
-main().catch((err: unknown) => {
-  console.error(err);
+// Top-level await with try/catch — the brief mandates async/await, no .then()/.catch().
+try {
+  await main();
+} catch (err) {
+  log.error({ err }, "fatal: pipeline run failed");
   process.exit(1);
-});
+}

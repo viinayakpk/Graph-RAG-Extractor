@@ -4,8 +4,9 @@ import type { ChunkExtraction } from "../types/requirement.js";
 import { buildClient, modelName } from "./client.js";
 import { readCache, writeCache } from "./cache.js";
 import { createQueue } from "./queue.js";
-import { PROMPT_VERSION, buildSystemPrompt } from "./prompt.js";
+import { PROMPT_VERSION, buildSystemPrompt, buildGleanerPrompt } from "./prompt.js";
 import { validateExtractions, recoverPartialExtractions } from "./validate.js";
+import { extractionConfig } from "../config.js";
 
 const MAX_RETRIES = 3;
 const RETRY_BASE_MS = 1000;
@@ -25,6 +26,20 @@ function buildUserMessage(chunk: Chunk): string {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+// Split a chunk's content in half by lines, keeping all metadata (same chunk_id,
+// page, position, category). Used only when a block is so dense that the model's
+// extraction JSON overflows its output-token cap — splitting lets each half fit.
+// Returns null when the content is a single line and cannot be divided.
+function splitChunkContent(chunk: Chunk): [Chunk, Chunk] | null {
+  const lines = chunk.content.split("\n");
+  if (lines.length < 2) return null;
+  const mid = Math.ceil(lines.length / 2);
+  return [
+    { ...chunk, content: lines.slice(0, mid).join("\n") },
+    { ...chunk, content: lines.slice(mid).join("\n") },
+  ];
 }
 
 interface TokenUsage {
@@ -80,6 +95,31 @@ async function callWithRetry(
       });
 
       logTokenUsage(chunk, response.usage, log);
+
+      // Output hit the token cap (8192 for deepseek-chat): the JSON is truncated
+      // mid-string and unparseable, and retrying at temperature 0 reproduces it
+      // exactly. Split the block and extract the halves instead — this is the only
+      // way to recover an over-dense chunk without losing it from the tree.
+      if (response.choices[0]?.finish_reason === "length") {
+        const halves = splitChunkContent(chunk);
+        if (!halves) {
+          log.error(
+            { chunk_id: chunk.chunk_id, source_file: chunk.source_file },
+            "extraction output truncated and chunk is a single line — cannot split, excluded",
+          );
+          return null;
+        }
+        log.warn(
+          { chunk_id: chunk.chunk_id, source_file: chunk.source_file, attempt },
+          "extraction output truncated — splitting chunk and extracting halves",
+        );
+        const [first, second] = await Promise.all([
+          callWithRetry(halves[0], log),
+          callWithRetry(halves[1], log),
+        ]);
+        if (first === null && second === null) return null;
+        return [...(first ?? []), ...(second ?? [])];
+      }
 
       const rawContent = response.choices[0]?.message?.content ?? "{}";
       let parsed: unknown;
@@ -141,6 +181,53 @@ async function callWithRetry(
   return null;
 }
 
+// Recall second pass: re-read the block knowing what the first pass produced, and
+// keep only obligations it missed. Best-effort — a single call, no retry; on any
+// failure we keep the first-pass result. Items are validated and (downstream)
+// number-grounded like any other, so the gleaner cannot silently invent.
+async function gleanAdditional(
+  chunk: Chunk,
+  existing: ChunkExtraction[],
+  log: Logger,
+): Promise<ChunkExtraction[]> {
+  if (existing.length === 0) return [];
+  const already = existing.map((e, i) => `${i + 1}. ${e.bullet_point}`).join("\n");
+  const userMessage = `${buildUserMessage(chunk)}\n\n## Already extracted (do not repeat)\n${already}`;
+  try {
+    const response = await buildClient().chat.completions.create({
+      model: modelName(),
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: buildGleanerPrompt(chunk.document_region) },
+        { role: "user", content: userMessage },
+      ],
+    });
+    logTokenUsage(chunk, response.usage, log);
+    if (response.choices[0]?.finish_reason === "length") return []; // ignore a truncated gleaner
+    const items = (JSON.parse(response.choices[0]?.message?.content ?? "{}") as Record<string, unknown>)["extractions"];
+    if (!Array.isArray(items) || items.length === 0) return [];
+    const valid = validateExtractions(items, chunk, log);
+    const gleaned = valid.length > 0 ? valid : recoverPartialExtractions(items, chunk, log);
+    // Defensive dedup: drop any gleaned item that restates a first-pass bullet.
+    const seen = new Set(existing.map((e) => e.bullet_point.toLowerCase().trim()));
+    const fresh = gleaned.filter((g) => !seen.has(g.bullet_point.toLowerCase().trim()));
+    if (fresh.length > 0) {
+      log.info(
+        { chunk_id: chunk.chunk_id, source_file: chunk.source_file, gleaned: fresh.length },
+        "recall gleaner found additional requirements the first pass missed",
+      );
+    }
+    return fresh;
+  } catch (err) {
+    log.warn(
+      { chunk_id: chunk.chunk_id, source_file: chunk.source_file, err },
+      "recall gleaner failed — keeping first-pass extractions only",
+    );
+    return [];
+  }
+}
+
 export async function extract(
   chunks: Chunk[],
   cacheDir: string,
@@ -169,12 +256,21 @@ export async function extract(
         return null;
       }
 
-      await writeCache(cacheDir, chunk.chunk_id, extractions);
+      // Glean only prose / preamble blocks, where the first pass can miss one
+      // obligation among many. A single LV position is one deliverable the first
+      // pass already extracts in full, so gleaning it only restates sub-clauses.
+      const extra =
+        extractionConfig.recallGleaner && chunk.document_region !== "lv-position"
+          ? await gleanAdditional(chunk, extractions, log)
+          : [];
+      const combined = extra.length > 0 ? [...extractions, ...extra] : extractions;
+
+      await writeCache(cacheDir, chunk.chunk_id, combined);
       log.info(
-        { chunk_id: chunk.chunk_id, source_file: chunk.source_file, count: extractions.length },
+        { chunk_id: chunk.chunk_id, source_file: chunk.source_file, count: combined.length, gleaned: extra.length },
         "extracted requirements",
       );
-      return extractions;
+      return combined;
     }),
   );
 

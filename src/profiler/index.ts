@@ -10,14 +10,11 @@ import {
   hasColumnNoise,
   detectStrategy,
   detectRepeatedHeaders,
-  pageHasPreambleOz,
 } from "./detect.js";
 import { profilerConfig } from "../config.js";
 
 // Unicode ligature characters — raw presence in PDF text measures normalization burden
 const LIGATURE_RE = /[ﬀﬁﬂﬃﬄﬅﬆ]/g;
-
-const SAMPLE_SIZE = profilerConfig.sampleSize;
 
 // pdfjs TextItem has 'str' + 'hasEOL'; TextMarkedContent has 'type'. Distinguish by 'str'.
 interface PdfjsTextItem {
@@ -39,39 +36,30 @@ function extractPageText(items: object[]): string {
   return text.trimEnd();
 }
 
+// Sample count scales with document length — a fixed number under-samples a large
+// tender (and can miss a mid-document section) — but stays bounded so profiling a
+// very large document stays fast.
+function sampleSizeFor(pageCount: number): number {
+  return Math.min(
+    profilerConfig.sampleSizeMax,
+    Math.max(
+      profilerConfig.sampleSizeMin,
+      Math.floor(pageCount * profilerConfig.sampleSizeFraction),
+    ),
+  );
+}
+
 function samplePageNumbers(pageCount: number): number[] {
-  if (pageCount <= SAMPLE_SIZE) {
+  const sampleSize = sampleSizeFor(pageCount);
+  if (pageCount <= sampleSize) {
     return Array.from({ length: pageCount }, (_, i) => i + 1);
   }
   const first = [1, 2, 3, 4, 5];
   const last = [pageCount - 4, pageCount - 3, pageCount - 2, pageCount - 1, pageCount];
-  const middleCount = SAMPLE_SIZE - 10;
+  const middleCount = sampleSize - 10;
   const step = Math.floor((pageCount - 10) / middleCount);
   const middle = Array.from({ length: middleCount }, (_, i) => 6 + i * step);
   return [...first, ...middle, ...last];
-}
-
-// For "mixed" documents: find the last sampled page that contains a vorbemerkungen OZ code,
-// then return (nextSample - 1) as the boundary so pages between the last preamble sample
-// and the next sample are included in the preamble pass, not the position pass.
-// Scanning all samples (not stopping at the first gap) handles continuation pages within
-// a vorbemerkungen block — those pages have no OZ code at the top but are still preamble.
-function detectPreambleBoundary(
-  pageNumbers: number[],
-  rawPageTexts: string[],
-): number | null {
-  let lastPreambleSampled: number | null = null;
-
-  for (let i = 0; i < pageNumbers.length; i++) {
-    if (pageHasPreambleOz(rawPageTexts[i]!)) {
-      lastPreambleSampled = pageNumbers[i]!;
-    }
-  }
-
-  if (lastPreambleSampled === null) return null;
-
-  const nextSampled = pageNumbers.find((p) => p > lastPreambleSampled!);
-  return nextSampled !== undefined ? nextSampled - 1 : lastPreambleSampled;
 }
 
 export async function profile(filePath: string, log: Logger): Promise<DocumentProfile> {
@@ -114,11 +102,6 @@ export async function profile(filePath: string, log: Logger): Promise<DocumentPr
     : columnNoiseDetected ? "medium"
     : "high";
 
-  const preambleBoundaryPage =
-    suggestedStrategy === "mixed"
-      ? detectPreambleBoundary(pageNumbers, rawPageTexts)
-      : null;
-
   const result: DocumentProfile = {
     filename: source_file,
     pageCount,
@@ -130,7 +113,6 @@ export async function profile(filePath: string, log: Logger): Promise<DocumentPr
     repeatedHeaderLines,
     suggestedStrategy,
     parserConfidence,
-    preambleBoundaryPage,
   };
 
   log.info(
@@ -145,9 +127,8 @@ export async function profile(filePath: string, log: Logger): Promise<DocumentPr
       ligatureCorruptionRate: ligatureCorruptionRate.toFixed(5),
       repeatedHeaders: repeatedHeaderLines.length,
       sampledPages: pageNumbers.length,
-      preambleBoundaryPage,
     },
-    "profiler: complete"
+    "profiler: complete",
   );
 
   return result;

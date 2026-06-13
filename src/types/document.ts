@@ -1,7 +1,22 @@
 import type { DocumentStrategy } from "./chunk.js";
 
+export interface TextLine {
+  text: string;
+  /** Left edge (PDF user-space x of the first glyph on the line). */
+  x: number;
+  /** Vertical position (PDF baseline y; larger = higher on the page). */
+  y: number;
+  /** Total width of the line in user-space units. */
+  width: number;
+  /** Approximate font size of the line (largest glyph) — drives heading detection. */
+  fontSize: number;
+}
+
 export interface ParsedPage {
   pageNumber: number;
+  /** Geometry-reconstructed lines, in reading order. The structural source of truth. */
+  lines: TextLine[];
+  /** Lines joined and page-normalized — consumed by the current chunker. */
   cleanedText: string;
 }
 
@@ -22,7 +37,4 @@ export interface DocumentProfile {
   repeatedHeaderLines: string[];
   suggestedStrategy: DocumentStrategy;
   parserConfidence: "high" | "medium" | "low";
-  // Last page containing a vorbemerkungen OZ code, derived from the profiler sample.
-  // The "mixed" chunker uses this to split preamble from room-position pages.
-  preambleBoundaryPage: number | null;
 }

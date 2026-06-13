@@ -4,15 +4,7 @@ import type { Logger } from "pino";
 import { getDocument } from "./pdfjs.js";
 import type { DocumentProfile, ParsedDocument, ParsedPage } from "../types/document.js";
 import { normalizePage } from "./normalize.js";
-
-interface PdfjsTextItem {
-  str: string;
-  hasEOL: boolean;
-}
-
-function isTextItem(item: object): item is PdfjsTextItem {
-  return "str" in item;
-}
+import { reconstructLines } from "./geometry.js";
 
 export async function parse(
   filePath: string,
@@ -34,24 +26,22 @@ export async function parse(
     const page = await doc.getPage(pageNum);
     const textContent = await page.getTextContent();
 
-    let rawText = "";
-    for (const item of textContent.items as object[]) {
-      if (!isTextItem(item)) continue;
-      rawText += item.str;
-      rawText += item.hasEOL ? "\n" : " ";
-    }
-
-    const cleanedText = normalizePage(rawText.trimEnd(), documentProfile.repeatedHeaderLines, {
+    // Geometry-reconstructed lines are the structural source of truth; cleanedText
+    // is them joined and page-normalized, kept for the current chunker.
+    const lines = reconstructLines(textContent.items as object[]);
+    const rawText = lines.map((line) => line.text).join("\n");
+    const cleanedText = normalizePage(rawText, documentProfile.repeatedHeaderLines, {
       stripLvTableNoise,
     });
 
-    pages.push({ pageNumber: pageNum, cleanedText });
+    pages.push({ pageNumber: pageNum, lines, cleanedText });
 
     if (pageNum % 50 === 0) {
       log.info({ source_file, pageNum, totalPages: doc.numPages }, "parser: progress");
     }
   }
 
-  log.info({ source_file, pageCount: pages.length }, "parser: complete");
+  const lineCount = pages.reduce((sum, page) => sum + page.lines.length, 0);
+  log.info({ source_file, pageCount: pages.length, lineCount }, "parser: complete");
   return { filename: source_file, pageCount: pages.length, pages };
 }
