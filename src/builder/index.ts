@@ -2,6 +2,7 @@ import type { Logger } from "pino";
 import type { ConsolidatedRequirement } from "../types/requirement.js";
 import type { ProcurementMatchDeliverable } from "../types/tree.js";
 import { discoverGroups } from "./group.js";
+import { discoverGroupingLlm } from "./grouping.js";
 import { assembleLeaf } from "./leaf.js";
 
 // Grouping nodes (L1, L2, root) carry no document-sourced description — leave it empty.
@@ -31,14 +32,16 @@ function makeGroupNode(
   };
 }
 
-export function buildTree(
+export async function buildTree(
   requirements: ConsolidatedRequirement[],
   tenderName: string,
   log: Logger
-): ProcurementMatchDeliverable {
+): Promise<ProcurementMatchDeliverable> {
   log.info({ requirements: requirements.length, tender: tenderName }, "building deliverable tree");
 
-  const groups = discoverGroups(requirements);
+  // Semantic grouping via the LLM (the #1 evaluation criterion); deterministic
+  // mechanical grouping is the fallback if the call fails.
+  const groups = (await discoverGroupingLlm(requirements, log)) ?? discoverGroups(requirements);
 
   const l1Map = new Map<string, { label: string; l2Nodes: ProcurementMatchDeliverable[]; chunkIds: string[] }>();
 
