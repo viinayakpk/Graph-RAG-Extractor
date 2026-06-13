@@ -51,6 +51,7 @@ export const ConsolidatedRequirementSchema: z.ZodType<ConsolidatedRequirement> =
         "lv-position-match",
         "vorbemerkungen-category",
         "staging-dedup",
+        "semantic-link",
         "standalone",
       ]),
       mergeConfidence: z.enum(["high", "medium", "low"]),

@@ -4,7 +4,7 @@ import type {
   ConsolidatedRequirement,
   MergeRecord,
 } from "../types/requirement.js";
-import { OZ_3PART_RE, OZ_5PART_ALPHA_RE } from "../parser/oz-patterns.js";
+import { OZ_LINE_RE } from "../parser/oz-patterns.js";
 import { exactMatchMergeRecord } from "./rules/exact-match.js";
 import { dedupMergeRecord } from "./rules/dedup.js";
 import { preambleCategoryMergeRecord } from "./rules/preamble-category.js";
@@ -31,8 +31,11 @@ const PRIORITY_RANK = { must: 3, should: 2, optional: 1 } as const;
 
 // One extraction with a stable, unique key. A chunk can yield several
 // extractions, so the chunk_id alone is not unique — `${chunk_id}#${i}` is.
+// `order` is the extraction's position in document reading order, used to pick a
+// requirement's leading statement for the leaf title.
 interface Unit extends ChunkExtraction {
   unitKey: string;
+  order: number;
 }
 
 const unique = (xs: string[]): string[] => [...new Set(xs)];
@@ -41,33 +44,87 @@ const normalize = (s: string): string => s.toLowerCase().replace(/\s+/g, " ").tr
 
 // An OZ position code is globally unique (e.g. "01.01.0010", "GU.07.09.01.01").
 // A bare section item number ("3") is not — scoping identity merges to OZ codes
-// stops unrelated section items that share a number from being fused.
+// stops unrelated section items that share a number from being fused. Anchored
+// (OZ_LINE_RE) so a value like "01.01.0010 — see §3" is not treated as an OZ.
 function isOzPosition(itemNumber: string | null): boolean {
   if (!itemNumber) return false;
-  return OZ_3PART_RE.test(itemNumber) || OZ_5PART_ALPHA_RE.test(itemNumber);
+  return OZ_LINE_RE.test(itemNumber);
 }
 
 function assignUnitKeys(extractions: ChunkExtraction[]): Unit[] {
   const seenPerChunk = new Map<string, number>();
-  return extractions.map((ext) => {
+  return extractions.map((ext, idx) => {
     const i = seenPerChunk.get(ext.chunk_id) ?? 0;
     seenPerChunk.set(ext.chunk_id, i + 1);
-    return { ...ext, unitKey: `${ext.chunk_id}#${i}` };
+    return { ...ext, unitKey: `${ext.chunk_id}#${i}`, order: idx };
   });
 }
 
 // Among extractions that describe the same requirement, the representative
-// supplies the human-readable fields: the fullest description first (most
-// complete statement of the requirement), then highest confidence as a tiebreak.
-// Priority takes the strongest across the group (if any source says "must", the
-// merged requirement is "must"); standards/annexes are unioned. Nothing is lost:
-// every source chunk is still listed in source_chunk_ids.
+// supplies the body fields: the fullest description first (most complete statement
+// of the requirement), then highest confidence as a tiebreak. Priority takes the
+// strongest across the group (if any source says "must", the merged requirement is
+// "must"); standards/annexes are unioned. Nothing is lost: every source chunk is
+// still listed in source_chunk_ids.
 function pickRepresentative(units: Unit[]): Unit {
   return [...units].sort((a, b) => {
     const byLength = b.description_en.length - a.description_en.length;
     if (byLength !== 0) return byLength;
     return CONFIDENCE_RANK[b.confidence] - CONFIDENCE_RANK[a.confidence];
   })[0]!;
+}
+
+// The leaf TITLE comes from the requirement's leading statement in document order,
+// not its longest paragraph. For an LV position split into sub-blocks (e.g. a
+// garage stated with a long "gravel roof" sub-spec), "fullest description" would
+// wrongly title the leaf after the sub-block; the leading extraction is the
+// position's own descriptor. The representative still supplies the description.
+function leadUnit(units: Unit[]): Unit {
+  return units.reduce((earliest, u) => (u.order < earliest.order ? u : earliest));
+}
+
+// Significant words (length > 3) and separator-normalized numbers of a string —
+// used to detect a restated sub-clause that adds nothing new.
+function sigTokens(s: string): string[] {
+  return s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").split(/\s+/).filter((t) => t.length > 3);
+}
+function numbersOf(s: string): string[] {
+  return (s.match(/\d[\d.,]*/g) ?? []).map((n) => n.replace(/[.,]+$/, "").replace(/[.,]/g, ""));
+}
+
+// When several extractions are unioned into one requirement — a single LV position
+// the model split into sub-specs (garage body, roof, door, load ratings), or a
+// deliverable named on one page and specced on another — keep every description
+// that adds something, in document order. Picking only the "fullest" single
+// description silently dropped the others (e.g. the garage's dimensions and load
+// ratings). A later part is skipped only when it is a restatement — its words are
+// almost entirely already present AND it introduces no new number. The number
+// guard is the safety rule: a part carrying any value not yet seen is always kept,
+// so no dimension, quantity, or tolerance can ever be lost to dedup. This only
+// drops redundant text; it never alters a value. A lone unit is returned unchanged.
+function joinDescriptions(units: Unit[], pick: (u: Unit) => string | null): string | null {
+  const seen = new Set<string>();
+  const accTokens = new Set<string>();
+  const accNumbers = new Set<string>();
+  const parts: string[] = [];
+  for (const u of [...units].sort((a, b) => a.order - b.order)) {
+    const value = pick(u);
+    if (!value) continue;
+    const key = normalize(value);
+    if (key.length === 0 || seen.has(key)) continue;
+
+    const tokens = sigTokens(value);
+    const numbers = numbersOf(value);
+    const overlap = tokens.length === 0 ? 1 : tokens.filter((t) => accTokens.has(t)).length / tokens.length;
+    const introducesNumber = numbers.some((n) => !accNumbers.has(n));
+    if (parts.length > 0 && overlap >= 0.85 && !introducesNumber) continue; // redundant restatement
+
+    seen.add(key);
+    parts.push(value.trim());
+    for (const t of tokens) accTokens.add(t);
+    for (const n of numbers) accNumbers.add(n);
+  }
+  return parts.length > 0 ? parts.join("\n\n") : null;
 }
 
 function strongestPriority(units: Unit[]): ChunkExtraction["priority"] {
@@ -84,13 +141,14 @@ function buildRequirement(
   mergeRecord: MergeRecord,
 ): ConsolidatedRequirement {
   const rep = pickRepresentative(contentUnits);
+  const lead = leadUnit(contentUnits);
   return {
     id,
     source_chunk_ids: sourceChunkIds,
     merge_record: mergeRecord,
-    bullet_point: rep.bullet_point,
-    description_en: rep.description_en,
-    description_de: rep.description_de,
+    bullet_point: lead.bullet_point,
+    description_en: joinDescriptions(contentUnits, (u) => u.description_en) ?? rep.description_en,
+    description_de: joinDescriptions(contentUnits, (u) => u.description_de),
     priority: strongestPriority(contentUnits),
     equivalence_allowed: rep.equivalence_allowed,
     confidence: rep.confidence,
@@ -248,6 +306,25 @@ function consolidateRemaining(
     byDuplicate.set(key, list);
   }
   for (const group of byDuplicate.values()) {
+    if (group.length < 2) continue;
+    for (let i = 1; i < group.length; i++) ds.union(group[0]!.unitKey, group[i]!.unitKey);
+  }
+
+  // (c) Entity resolution (Tier 1): the same spec repeated across positions — the
+  //     same cabinet in 30 rooms under 30 OZ codes — is one requirement that cites
+  //     all of its rooms, not 30 leaves. Block by category (compare like with like)
+  //     and match on identical normalized description: identical text is the same
+  //     spec, in any language, with no over-merge risk. The fuzzy residual
+  //     (paraphrased / cross-language) is left for a later embedding pass.
+  const byCanonical = new Map<string, Unit[]>();
+  for (const u of units) {
+    if (!u.category_code) continue; // structural block: only items carrying a category
+    const key = `${u.category_code}|${normalize(u.description_en)}`;
+    const list = byCanonical.get(key) ?? [];
+    list.push(u);
+    byCanonical.set(key, list);
+  }
+  for (const group of byCanonical.values()) {
     if (group.length < 2) continue;
     for (let i = 1; i < group.length; i++) ds.union(group[0]!.unitKey, group[i]!.unitKey);
   }
