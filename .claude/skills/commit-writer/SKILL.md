@@ -50,7 +50,7 @@ Every workflow step that involves a stash must use `--include-untracked`.
 - Never mention file names in the subject — scopes cover that
 - If the diff touches more than one layer (e.g., extractor + schema), use the primary changed layer as scope
 - Body explains the "why": a constraint, a bug root cause, a tradeoff — not a list of changed files
-- Do NOT include "Co-Authored-By" lines unless explicitly asked
+- NEVER include "Co-Authored-By", AI attribution, or any Claude/assistant signature — commits are authored by Vinayak only
 
 ## Output
 
