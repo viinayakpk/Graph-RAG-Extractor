@@ -2,33 +2,20 @@ import type { Logger } from "pino";
 import type { Chunk } from "../types/chunk.js";
 import type { ConsolidatedRequirement } from "../types/requirement.js";
 
-// ---------------------------------------------------------------------------
-// Number grounding — the money-grade faithfulness check. A leaf's English
-// description is the model's translation/paraphrase, so a digit could in principle
-// drift ("2,50m" → "25.0m", a dropped zero). Here we verify that every numeric
-// value in description_en actually appears in the leaf's own source chunks. Any
-// value we cannot find is reported and the leaf's confidence is honestly dropped
-// to "low" — which the brief defines as "flag for human review". We never raise
-// confidence and never alter a value; this only ever flags.
-//
-// Matching is separator-tolerant but value-exact: a source "2,50" grounds an
-// English "2.50" (comma/point locale swap), but a dropped digit "2.5" stays
-// ungrounded. Comparison is on whole number tokens, never substrings, so "25"
-// is not falsely grounded by a source "250".
-// ---------------------------------------------------------------------------
+// Number grounding — the money-grade faithfulness check. Verifies every numeric value
+// in a leaf's English description appears in its source chunks; an unverifiable value
+// drops confidence to "low" (never alters a value). Separator-tolerant, whole-token.
 
-const NUMBER_RE = /\d[\d., ]*\d|\d/g;
+const NUMBER_RE = /\d[\d., ]*\d|\d/g;
 
 function numberTokens(text: string): string[] {
   return (text.match(NUMBER_RE) ?? [])
-    .map((t) => t.replace(/ /g, "").replace(/[.,]+$/, "")) // drop NBSP + trailing separators
+    .map((t) => t.replace(/ /g, "").replace(/[.,]+$/, ""))
     .filter((t) => t.length > 0);
 }
 
-// Measurement values only: at most one decimal separator. A token with two or more
-// separators is a multi-segment identifier (a room / position code like
-// "07.04.01.01"), not a quantity or dimension — those are verified structurally,
-// not here, and must not dilute the spec-value faithfulness signal.
+// Measurement values only (<=1 separator); a multi-segment identifier code is
+// verified structurally, not here.
 function valueTokens(text: string): string[] {
   return numberTokens(text).filter((t) => (t.match(/[.,]/g) ?? []).length <= 1);
 }
@@ -39,7 +26,7 @@ function forms(token: string): Set<string> {
     token,
     token.replace(/\./g, ","),
     token.replace(/,/g, "."),
-    token.replace(/[.,]/g, ""), // separators removed (digit form, still whole-token)
+    token.replace(/[.,]/g, ""),
   ]);
 }
 
@@ -79,16 +66,14 @@ export function verifyGrounding(
   };
 
   const verified = requirements.map((req) => {
-    // The leaf's full provenance: chunk body text AND structural identifiers (room
-    // / position / section codes live in headings and position numbers, and the
-    // model legitimately echoes them — "in room 2.OG.08"), plus its own German
-    // verbatim. All of it is ground truth for the numbers the English echoes.
+    // Ground truth: the leaf's chunk text + its structural codes (room/position/
+    // section) + its German verbatim — every place the English numbers can come from.
     const sourceParts: string[] = [
       req.description_de ?? "",
       req.section_heading ?? "",
       req.item_number ?? "",
       req.category_code ?? "",
-      req.standards.join(" "), // standard codes (DIN/EN/ISO…) are identifiers, trusted as grounded
+      req.standards.join(" "), // standard codes are identifiers, trusted as grounded
     ];
     let missingChunk = false;
     for (const id of req.source_chunk_ids) {
@@ -108,9 +93,6 @@ export function verifyGrounding(
     if (ungrounded.length === 0) return req;
 
     stats.leavesFlagged++;
-    // Cannot verify (a referenced chunk was absent) is logged differently from a
-    // value that is present in source but altered — only the latter is a real
-    // faithfulness concern, but both warrant a human glance, so both drop to low.
     log.warn(
       {
         id: req.id,

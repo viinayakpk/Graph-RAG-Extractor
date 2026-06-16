@@ -3,9 +3,8 @@ import type { DocumentProfile, ParsedDocument } from "../types/document.js";
 import type { Chunk } from "../types/chunk.js";
 import { structureChunk } from "./structure.js";
 
-// One structure-aware chunker for every document. The profiler's strategy is now
-// only a hint (it decides whether LV pricing-noise stripping runs); the chunking
-// itself reads the page geometry, so it no longer depends on a per-tender path.
+// One structure-aware chunker for every document; the profiler's strategy is only
+// a hint (whether LV-noise stripping runs).
 export async function chunk(
   doc: ParsedDocument,
   profile: DocumentProfile,

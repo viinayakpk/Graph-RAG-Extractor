@@ -32,9 +32,8 @@ function makeGroupNode(
   };
 }
 
-// The document's language: the most common non-null source_language across all
-// requirements, defaulting to "en". A tender is one language, so this resolves
-// per-leaf noise (e.g. an English line the model mislabelled "de").
+// The document's language: the most common non-null source_language, default "en".
+// A tender is one language, so this resolves per-leaf noise.
 function dominantLanguage(requirements: ConsolidatedRequirement[]): string {
   const counts = new Map<string, number>();
   for (const r of requirements) {
@@ -59,10 +58,8 @@ export async function buildTree(
 ): Promise<ProcurementMatchDeliverable> {
   log.info({ requirements: requirements.length, tender: tenderName }, "building deliverable tree");
 
-  // A tender is written in one language; per-leaf source_language is occasionally
-  // noisy (the model may tag an English line "de"). Resolve it once, by majority, so
-  // the verbatim-original locale key is consistent and English documents get no
-  // spurious foreign key.
+  // Resolve the document language once (by majority) so the verbatim-original locale
+  // key is consistent and English documents get no spurious foreign key.
   const docLanguage = dominantLanguage(requirements);
   log.info({ docLanguage }, "resolved document language");
 

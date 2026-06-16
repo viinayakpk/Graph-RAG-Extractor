@@ -7,13 +7,9 @@ import { normalizeInline } from "../parser/normalize.js";
 import { OZ_3PART_RE, OZ_5PART_ALPHA_RE, OZ_VORBEMERKUNGEN_RE } from "../parser/oz-patterns.js";
 import { chunkerConfig, profilerConfig } from "../config.js";
 
-// One general, structure-aware chunker that replaces the per-document strategies.
-// It reads the geometry-reconstructed lines and segments the document the way a
-// human eyes it: headings open sections, a label leading a line opens an item,
-// everything else is body. OZ codes are just one kind of label (enriched with
-// lv_position/category); the same logic handles English numbered lists, German
-// LV positions, and prose. Section labels are best-effort context — the semantic
-// grouping happens later in the tree builder.
+// Structure-aware chunker: segments the geometry lines the way a human reads —
+// headings open sections, a label leading a line opens an item, everything else is
+// body. OZ codes are one kind of label, enriched with lv_position/category.
 
 interface OzLabel {
   code: string;
@@ -26,9 +22,7 @@ const OZ_VORB_START = new RegExp(`^(${OZ_VORBEMERKUNGEN_RE.source})(?:\\s|$)`);
 const OZ_5PART_START = new RegExp(`^(${OZ_5PART_ALPHA_RE.source})(?:\\s|$)`);
 const OZ_3PART_START = new RegExp(`^(${OZ_3PART_RE.source})(?:\\s|$)`);
 
-// An OZ code leading a line → a position/preamble item with structure-derived
-// enrichment. Works whether or not the code shares the line with its description
-// (the old chunker required the code to own the whole line, so it found nothing).
+// An OZ code leading a line → a position/preamble item with derived enrichment.
 function ozLabelAt(text: string): OzLabel | null {
   const vorb = OZ_VORB_START.exec(text);
   if (vorb) {
@@ -47,17 +41,14 @@ function ozLabelAt(text: string): OzLabel | null {
   return null;
 }
 
-// A generic list-item leader: "1.", "10)", "a)", "3.2.1", a bullet. Requires a
-// delimiter and following text, so a date like "2 June 2026" is not mistaken
-// for an item the way the old heading regex did.
+// A generic list-item leader ("1.", "10)", "a)", "3.2.1", a bullet) with following text.
 const GENERIC_ITEM_RE = /^(\d{1,3}(?:\.\d{1,3})+|\d{1,3}[.)]|[A-Za-z][.)]|[•·*•])\s+\S/;
 function genericItemLabel(text: string): string | null {
   const m = GENERIC_ITEM_RE.exec(text);
   return m ? m[1]!.replace(/[.)]+$/, "") : null;
 }
 
-// LV group/subgroup header: a short 1- or 2-segment numeric code + a title
-// ("01 Fahrradgaragen Marienkirchplatz", "01.01 Fahrradgaragen").
+// LV group/subgroup header: a short 1- or 2-segment numeric code followed by a title.
 const GROUP_HEADER_RE = /^\d{2}(?:\.\d{2})?\s+\p{Lu}[\p{L} ./&-]{2,}$/u;
 
 function isCapsHeading(text: string): boolean {
@@ -78,8 +69,7 @@ function modeFontSize(doc: ParsedDocument): number {
   const counts = new Map<number, number>();
   for (const page of doc.pages) {
     for (const line of page.lines) {
-      // Round to 0.1pt, not integers — body 9.5pt and a 10pt heading must stay in
-      // separate buckets so the font-size contrast survives for heading detection.
+      // Round to 0.1pt so body 9.5pt and a 10pt heading stay in separate buckets.
       const size = Math.round(line.fontSize * 10) / 10;
       counts.set(size, (counts.get(size) ?? 0) + 1);
     }
@@ -95,9 +85,7 @@ function modeFontSize(doc: ParsedDocument): number {
   return mode;
 }
 
-// Footers/headers often embed a varying page number ("Seite 1 von 409"), so we
-// count frequency on a digit-normalized key — otherwise every paginated footer
-// looks unique and leaks into the chunks.
+// Digit-normalized key so a footer with a varying page number still matches.
 function pageKey(text: string): string {
   return text.replace(/\d+/g, "#");
 }

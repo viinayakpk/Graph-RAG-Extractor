@@ -2,9 +2,8 @@ import type { DocumentRegion } from "../types/chunk.js";
 
 export const PROMPT_VERSION = "2.0";
 
-// The fields the model returns — requirement *content* only. Structural metadata
-// (which chunk / page / position / category) is authoritative from the chunker
-// and attached during enrichment, so it is not requested here.
+// The fields the model returns — requirement content only; structural metadata is
+// attached from the chunker during enrichment.
 const EXTRACTION_SCHEMA = `Return a JSON object with key "extractions": an array of objects.
 Each object has:
 - bullet_point: a short imperative title in English (max 80 chars)
@@ -37,11 +36,8 @@ export function buildSystemPrompt(region: DocumentRegion): string {
   return `${BASE_INSTRUCTIONS}\n\n## This block\n${DOCUMENT_CONTEXT[region]}`;
 }
 
-// Second-pass "gleaner" for recall: re-read the same block having seen the first
-// pass's titles, and surface only obligations genuinely present in the text but
-// missing from that list. Multi-pass extraction is the standard high-recall
-// technique; the strict "only what is literally in the text, else empty" framing
-// plus downstream Zod validation and number-grounding keep it from inventing.
+// Gleaner prompt: re-read the block and surface only obligations present in the
+// text but missing from the first pass's list ("else empty").
 const GLEANER_INSTRUCTIONS = `You are a procurement analyst re-checking a tender block for COMPLETENESS, in any language.
 A first pass already extracted requirements from this block; its bullet_points are listed below under "Already extracted".
 Return ONLY obligations or specifications that are genuinely stated in the block text but are MISSING from that list.

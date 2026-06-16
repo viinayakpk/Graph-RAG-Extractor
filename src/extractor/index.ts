@@ -28,10 +28,8 @@ function buildUserMessage(chunk: Chunk): string {
     .join("\n");
 }
 
-// Split a chunk's content in half by lines, keeping all metadata (same chunk_id,
-// page, position, category). Used only when a block is so dense that the model's
-// extraction JSON overflows its output-token cap — splitting lets each half fit.
-// Returns null when the content is a single line and cannot be divided.
+// Split a chunk in half (by lines, then words, then chars), keeping its metadata,
+// when its extraction output overflows the token cap. Null only for a single char.
 function splitChunkContent(chunk: Chunk): [Chunk, Chunk] | null {
   const halve = (parts: string[], joiner: string): [Chunk, Chunk] => {
     const mid = Math.ceil(parts.length / 2);
@@ -70,13 +68,8 @@ function logTokenUsage(chunk: Chunk, usage: TokenUsage | undefined, log: Logger)
   );
 }
 
-// Extract requirements from one chunk. Return values are deliberately distinct:
-//   ChunkExtraction[] — zero or more requirements. An *empty* array is a valid
-//                       answer: the chunk carries no obligation (boilerplate,
-//                       a heading-only block, a cancelled position).
-//   null              — extraction failed after every retry. The caller excludes
-//                       the chunk from the tree instead of inventing a node, so
-//                       every leaf still traces back to real extracted text.
+// Extract requirements from one chunk. [] means no obligation (valid); null means
+// extraction failed after every retry (the caller excludes the chunk from the tree).
 async function callWithRetry(
   chunk: Chunk,
   log: Logger,
@@ -104,10 +97,8 @@ async function callWithRetry(
 
       logTokenUsage(chunk, response.usage, log);
 
-      // Output hit the token cap (8192 for deepseek-chat): the JSON is truncated
-      // mid-string and unparseable, and retrying at temperature 0 reproduces it
-      // exactly. Split the block and extract the halves instead — this is the only
-      // way to recover an over-dense chunk without losing it from the tree.
+      // Output hit the token cap → truncated JSON. Retrying is futile at temp 0;
+      // split the block and extract the halves instead.
       if (response.choices[0]?.finish_reason === "length") {
         const halves = splitChunkContent(chunk);
         if (!halves) {
@@ -189,10 +180,8 @@ async function callWithRetry(
   return null;
 }
 
-// Recall second pass: re-read the block knowing what the first pass produced, and
-// keep only obligations it missed. Best-effort — a single call, no retry; on any
-// failure we keep the first-pass result. Items are validated and (downstream)
-// number-grounded like any other, so the gleaner cannot silently invent.
+// Recall second pass: re-read the block and keep only obligations the first pass
+// missed. Best-effort (no retry); gleaned items are validated like any other.
 async function gleanAdditional(
   chunk: Chunk,
   existing: ChunkExtraction[],
@@ -264,9 +253,8 @@ export async function extract(
         return null;
       }
 
-      // Glean only prose / preamble blocks, where the first pass can miss one
-      // obligation among many. A single LV position is one deliverable the first
-      // pass already extracts in full, so gleaning it only restates sub-clauses.
+      // Glean only prose/preamble blocks; a single LV position is already fully
+      // extracted, so gleaning it just restates sub-clauses.
       const extra =
         extractionConfig.recallGleaner && chunk.document_region !== "lv-position"
           ? await gleanAdditional(chunk, extractions, log)

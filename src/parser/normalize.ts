@@ -16,9 +16,7 @@ const LV_PRICING_TABLE_NOISE = /EUR\s+(?:PP|EP|SO|ST)\s+EUR/g;
 // "01.02 LO" — Lohnanteil (labour cost share) column artifact from LV table layout
 const LV_LOHNANTEIL_NOISE = /\b\d+\.\d+\s+LO\b/g;
 
-// Per-string character fixes that are always safe: ligatures, dashes, smart
-// quotes, zero-width characters. Applied both to individual lines (by the
-// chunker) and to whole pages.
+// Always-safe per-string fixes: ligatures, dashes, smart quotes, zero-width chars.
 export function normalizeInline(text: string): string {
   return text
     .replace(LIGATURE_RE, (char) => LIGATURES[char] ?? char)
@@ -29,9 +27,7 @@ export function normalizeInline(text: string): string {
 }
 
 export interface NormalizeOptions {
-  // LV pricing-table noise ("EUR PP EUR", "01.02 LO") only occurs in Austrian
-  // Leistungsverzeichnis tenders. Off by default so it never runs on prose
-  // documents (e.g. the English tender), where it could only do harm.
+  // LV pricing-table noise only occurs in LV tenders; off by default.
   stripLvTableNoise?: boolean;
 }
 

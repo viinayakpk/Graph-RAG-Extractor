@@ -1,8 +1,7 @@
 import type { MergeRecord } from "../../types/requirement.js";
 
-// A Salzburg vorbemerkungen spec (the requirement) plus every room position of
-// its category (where the spec is applied). The spec chunk is the general spec;
-// the position chunks are room-placement evidence.
+// A vorbemerkungen spec plus every room position of its category: the spec chunk
+// is the general spec, the position chunks are room-placement evidence.
 export function preambleCategoryMergeRecord(
   categoryCode: string,
   preambleChunkIds: string[],

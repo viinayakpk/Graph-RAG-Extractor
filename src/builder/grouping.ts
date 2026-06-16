@@ -4,18 +4,9 @@ import type { ConsolidatedRequirement } from "../types/requirement.js";
 import { buildClient, modelName } from "../extractor/client.js";
 import type { Group } from "./group.js";
 
-// Grouping turns the flat list of requirements into a named L1/L2 tree.
-//
-// Small tenders: one LLM call assigns every leaf — the model sees all the bullets
-// and groups them semantically (best quality when it fits).
-//
-// Large tenders: a single classify-everything call overflows the model's output
-// and fails (Salzburg, 2000+ leaves). So we follow the production taxonomy pattern
-// (TnT-LLM / BERTopic): the leaves are already pre-clustered by the document's own
-// structure (category_code / section_heading), so we *induce* a named taxonomy from
-// those keys — a call bounded by the number of keys (~tens), not leaves — then
-// assign every leaf by its key. This also honours the brief: we organise the
-// document's real structure rather than inventing categories.
+// Grouping turns the flat requirements into a named L1/L2 tree. Small tenders: one
+// LLM call groups every leaf. Large tenders induce a taxonomy from the document's own
+// category/section keys (bounded by key count) and assign each leaf by its key.
 const INLINE_LIMIT = 150;
 
 function slug(text: string): string {
@@ -36,7 +27,7 @@ async function callJson(system: string, user: string): Promise<string> {
   return response.choices[0]?.message?.content ?? "{}";
 }
 
-// --- Small tenders: single-call grouping by leaf index ---------------------
+// Small tenders: single-call grouping by leaf index
 
 const InlineSchema = z.object({
   level1: z
@@ -95,12 +86,10 @@ async function inlineGrouping(
   return groups;
 }
 
-// --- Large tenders: taxonomy induction over the document's grouping keys ----
+// Large tenders: taxonomy induction from the document's grouping keys
 
-// One assignment per category key: a human title for the category itself (its L2)
-// and the broad theme it sits under (its L1). The document's categories ARE the L2
-// layer — the model only names them and rolls them up into L1 themes, so it cannot
-// lump distinct categories together and the tree stays fine-grained at any scale.
+// One assignment per category key: a title for the category (its L2) and the broad
+// theme it sits under (its L1). The document's categories ARE the L2 layer.
 const InductionSchema = z.object({
   assignments: z
     .array(
@@ -156,9 +145,8 @@ async function inducedGrouping(
     if (!keyToNode.has(a.key)) keyToNode.set(a.key, { l1: a.l1, l2: a.l2 });
   }
 
-  // Each category key becomes its own L2 node (unique l2Key), placed under the
-  // theme the model named. The L2 layer is therefore always as fine-grained as the
-  // document's categories, regardless of how many L1 themes the model chooses.
+  // Each category key becomes its own L2 node under the model-named theme, so the L2
+  // layer is always as fine-grained as the document's categories.
   const groups: Group[] = [];
   const leftover: ConsolidatedRequirement[] = [];
   for (const [key, reqs] of byKey) {
@@ -191,7 +179,7 @@ async function inducedGrouping(
   return groups;
 }
 
-// Collectively exhaustive: anything unassigned goes into one honest bucket.
+// Anything unassigned goes into one bucket.
 function appendOther(groups: Group[], leftover: ConsolidatedRequirement[], log: Logger): void {
   if (leftover.length === 0) return;
   log.warn({ unassigned: leftover.length }, "grouping left requirements unassigned — bucketed as Other");

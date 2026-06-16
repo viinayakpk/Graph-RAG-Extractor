@@ -1,14 +1,8 @@
 import { z } from "zod";
 import type { ConsolidatedRequirement } from "../types/requirement.js";
 
-// What the DeepSeek prompt (extractor/prompt.ts) actually asks the model to
-// return: requirement *content* only. Structural metadata — chunk_id,
-// source_file, page_number, section_heading — is NOT requested from the model;
-// it is authoritative from the chunker and attached during enrichment. Validating
-// those fields against the model's output would reject every well-formed response
-// (the model is never even shown the chunk_id). The arrays and the optional German
-// text default when omitted, so a response missing only an optional field is kept
-// rather than discarded.
+// What the model is asked to return — requirement content only. Structural metadata
+// is attached from the chunker afterward; arrays/optional fields default when omitted.
 export const LlmExtractionItemSchema = z.object({
   bullet_point: z.string().min(3),
   description_en: z.string().min(5),
@@ -27,12 +21,8 @@ export const LlmExtractionItemSchema = z.object({
 export const LlmExtractionArraySchema = z.array(LlmExtractionItemSchema);
 export type LlmExtractionItem = z.infer<typeof LlmExtractionItemSchema>;
 
-// The enriched extraction = validated model content + chunker-supplied metadata.
-// Used to validate cache reads, so a stale or corrupt cache file is rejected and
-// re-extracted rather than silently flowing into the tree. Inferred (not annotated
-// with z.ZodType<ChunkExtraction>) because the array/text defaults above make the
-// *input* type optional; the parsed *output* is exactly ChunkExtraction, which the
-// cache read site enforces.
+// Enriched extraction (model content + chunker metadata). Validates cache reads so a
+// stale or corrupt cache file is rejected rather than flowing into the tree.
 export const ChunkExtractionSchema =
   LlmExtractionItemSchema.extend({
     chunk_id: z.string().min(1),

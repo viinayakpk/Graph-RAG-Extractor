@@ -1,8 +1,6 @@
-// Labelled-position code families (ÖNORM A/B 2063 "Ordnungszahl", OZ). The actual
-// patterns live in `positionCodeConfig` so a new tender format is a config edit, not
-// a code change; this module just compiles them. Anything outside these families is
-// still captured by the chunker's generic labelled-item path — just without the
-// position/category enrichment.
+// OZ position-code families (ÖNORM A/B 2063). The patterns live in positionCodeConfig
+// so a new format is a config edit; this module compiles them. Anything outside them
+// still chunks via the generic labelled-item path, without position/category enrichment.
 import { positionCodeConfig } from "../config.js";
 
 // Leistungsgruppe.Unterleistungsgruppe.serial — e.g. "01.01.0010".
