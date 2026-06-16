@@ -188,6 +188,7 @@ function mergeRequirements(group: ConsolidatedRequirement[]): ConsolidatedRequir
     category_code: rep.category_code,
     section_heading: rep.section_heading,
     item_number: rep.item_number,
+    source_language: rep.source_language,
   };
 }
 
@@ -228,6 +229,8 @@ export async function linkSemantic(
   let calls = 0;
   let linked = 0;
   let capped = false;
+  let aborted = false;
+  let consecutiveErrors = 0;
 
   for (const block of blocks) {
     if (block.length < 2) continue;
@@ -240,7 +243,22 @@ export async function linkSemantic(
       if (find(a.id) === find(b.id)) continue; // already linked transitively
       pairs++;
       calls++;
-      const verdict = await discriminate(a, b);
+      // Linking is best-effort: a discriminator call that fails (rate limit, auth,
+      // network) leaves the pair unlinked rather than crashing the run. Repeated
+      // failures abort the pass and the pipeline continues with what it has.
+      let verdict: z.infer<typeof DiscriminatorSchema>;
+      try {
+        verdict = await discriminate(a, b);
+        consecutiveErrors = 0;
+      } catch (err) {
+        consecutiveErrors++;
+        log.warn({ err, a: a.id, b: b.id }, "semantic-link discriminator call failed — pair left unlinked");
+        if (consecutiveErrors >= 3) {
+          aborted = true;
+          break;
+        }
+        continue;
+      }
       const same = verdict.relation === "same" && tryUnion(a.id, b.id);
       if (same) linked++;
       log.debug(
@@ -257,7 +275,10 @@ export async function linkSemantic(
         "semantic-link discriminator decision",
       );
     }
-    if (capped) break;
+    if (capped || aborted) break;
+  }
+  if (aborted) {
+    log.error("semantic linking aborted after repeated discriminator failures — remaining pairs left unlinked");
   }
 
   // Rebuild: collapse each union group through the non-lossy merge.
