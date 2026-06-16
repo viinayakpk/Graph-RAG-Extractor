@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readdir } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import pino from "pino";
 import { runPipeline } from "./pipeline.js";
@@ -19,17 +19,28 @@ async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       pdf: { type: "string", multiple: true, short: "p" },
+      dir: { type: "string", short: "d" },
       output: { type: "string", short: "o", default: "outputs" },
       force: { type: "boolean", short: "f", default: false },
     },
   });
 
-  if (!values.pdf?.length) {
-    log.error("--pdf <path> is required (pass multiple --pdf flags for multiple files)");
+  // Each PDF is one tender. --pdf lists them explicitly; --dir takes every PDF in a
+  // folder (what `docker compose up` uses to run all the mounted tenders).
+  const pdfs = [...(values.pdf ?? [])];
+  if (values.dir) {
+    const entries = await readdir(values.dir);
+    for (const name of entries.sort()) {
+      if (name.toLowerCase().endsWith(".pdf")) pdfs.push(resolve(values.dir, name));
+    }
+  }
+
+  if (pdfs.length === 0) {
+    log.error("provide --pdf <path> (repeatable) or --dir <folder of PDFs>");
     process.exit(1);
   }
 
-  for (const pdfPath of values.pdf) {
+  for (const pdfPath of pdfs) {
     const tenderName = basename(pdfPath, ".pdf").toLowerCase().replace(/\s+/g, "-");
     const outDir = resolve(values.output!, tenderName);
 
