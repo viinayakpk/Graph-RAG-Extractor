@@ -1,3 +1,4 @@
+// Chunk and document-classification types.
 export type DocumentRegion = "section" | "lv-position" | "vorbemerkungen";
 
 export type DocumentStrategy =

@@ -1,3 +1,4 @@
+// Concurrency limiter for parallel LLM calls.
 import pLimit from "p-limit";
 import { extractionConfig } from "../config.js";
 

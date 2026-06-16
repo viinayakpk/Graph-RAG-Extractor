@@ -1,5 +1,5 @@
+// Zod schemas for the LLM extraction contract and the on-disk extraction cache.
 import { z } from "zod";
-import type { ConsolidatedRequirement } from "../types/requirement.js";
 
 // What the model is asked to return — requirement content only. Structural metadata
 // is attached from the chunker afterward; arrays/optional fields default when omitted.
@@ -32,47 +32,3 @@ export const ChunkExtractionSchema =
   });
 
 export const ChunkExtractionArraySchema = z.array(ChunkExtractionSchema);
-
-export const ConsolidatedRequirementSchema: z.ZodType<ConsolidatedRequirement> =
-  z.object({
-    id: z.string().min(1),
-    source_chunk_ids: z.array(z.string()).min(1),
-    merge_record: z.object({
-      rule: z.enum([
-        "lv-position-match",
-        "vorbemerkungen-category",
-        "staging-dedup",
-        "semantic-link",
-        "standalone",
-      ]),
-      mergeConfidence: z.enum(["high", "medium", "low"]),
-      evidenceLinks: z.array(
-        z.object({
-          chunkId: z.string(),
-          evidenceRole: z.enum([
-            "general_spec",
-            "room_placement",
-            "quantity",
-            "maintenance",
-            "external_plan_reference",
-            "standard_citation",
-            "duplication",
-            "cross_reference",
-          ]),
-        }),
-      ),
-      whyMerged: z.string(),
-    }),
-    bullet_point: z.string().min(3),
-    description_en: z.string().min(5),
-    description_de: z.string().nullable(),
-    priority: z.enum(["must", "should", "optional"]),
-    equivalence_allowed: z.boolean().nullable(),
-    confidence: z.enum(["high", "medium", "low"]),
-    standards: z.array(z.string()),
-    referenced_annexes: z.array(z.string()),
-    category_code: z.string().nullable(),
-    section_heading: z.string().nullable(),
-    item_number: z.string().nullable(),
-    source_language: z.string().nullable(),
-  });

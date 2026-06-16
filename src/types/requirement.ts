@@ -1,3 +1,4 @@
+// Extraction, consolidation, and merge-record types.
 export type EvidenceRole =
   | "general_spec"
   | "room_placement"
