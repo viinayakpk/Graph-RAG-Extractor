@@ -1,6 +1,6 @@
 # Tender Extractor
 
-Reads a procurement tender's PDF(s) and extracts **every requirement** into one faithful, three-level `ProcurementMatchDeliverable` tree per tender — pulling pieces of the same requirement that are scattered across the document onto a single leaf, and grounding every leaf back to its source text.
+Reads a procurement tender's PDF(s) and extracts **every requirement** into one faithful, three-level `ProcurementMatchDeliverable` tree per tender pulling pieces of the same requirement that are scattered across the document onto a single leaf, and grounding every leaf back to its source text.
 
 ## Run it (Docker)
 
