@@ -1,3 +1,4 @@
+// The ProcurementMatchDeliverable output interface — the deliverable shape.
 export type LocaleObject<T> = Record<string, T>;
 
 export interface ProcurementMatchDeliverable {

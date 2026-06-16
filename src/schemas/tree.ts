@@ -1,3 +1,4 @@
+// Zod schema for the ProcurementMatchDeliverable tree — validates the final output.
 import { z } from "zod";
 import type { ProcurementMatchDeliverable } from "../types/tree.js";
 
@@ -28,7 +29,3 @@ export const ProcurementMatchDeliverableSchema: z.ZodType<ProcurementMatchDelive
       citedPersonIdArray: z.array(z.string()),
     }),
   );
-
-export type ProcurementMatchDeliverableInput = z.input<
-  typeof ProcurementMatchDeliverableSchema
->;

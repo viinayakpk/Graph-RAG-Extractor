@@ -1,3 +1,4 @@
+// DeepSeek client (OpenAI-compatible API) and model name, read from env.
 import OpenAI from "openai";
 
 export function buildClient(): OpenAI {
