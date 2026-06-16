@@ -1,13 +1,18 @@
-# ── Project-internal docs (not for public repo) ──────────────────────────────
+# ── Project-internal (not for public repo) ───────────────────────────────────
 CLAUDE.md
 idea.md
 ARCHITECTURE.md
+decisions.md
+.claude/
 
 # ── Generated pipeline outputs ────────────────────────────────────────────────
 outputs/
 
 # ── Input PDFs (provided by BOND — place in pdfs/, not committed) ─────────────
 pdfs/*.pdf
+
+# ── BOND's provided tender folder — not committed to a public repo (they have it)
+Task and files/
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
 .env
