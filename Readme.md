@@ -39,3 +39,7 @@ Each leaf matches the `ProcurementMatchDeliverable` interface exactly: `bulletPo
 
 - **English descriptions are model translations**, so a number could in principle drift; mitigations are the verbatim original (kept under its language key), the per-leaf source chunk IDs, and the number-grounding gate that flags untraceable values as `confidence: low`. Verify a figure against the verbatim or the cited chunk.
 - **Cross-block semantic linking is partial** — "named on page 60, specified on page 382" is linked within a category/section; linking across distant sections of a very large tender (or across separate files by fuzzy similarity) is a planned embedding pass.
+
+  **LLM for coding and Research**
+  I used Claude Code and other LLMs to get up to speed on procurement/ÖNORM tenders, weigh architectural options, and move quickly.
+  I directed the work, made the calls, and tested everything against the real documents, the judgment and structure are mine.
