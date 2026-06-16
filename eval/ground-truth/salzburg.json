@@ -1,7 +1,15 @@
 {
-  "_comment": "Ground truth for Salzburg Laboratory tender — populate after manual review",
+  "_comment": "Golden evaluation set — facts hand-verified against sampled pages of the source PDF. Each entry names a requirement (context keywords) and the exact value(s) that must appear on its leaf, the reference for checking extraction correctness.",
   "tender": "Salzburg Laboratory",
   "source_file": "Salzburg Laboratory Tender.pdf",
-  "reviewed_at": null,
-  "requirements": []
+  "reviewed_at": "2026-06-14",
+  "requirements": [
+    { "label": "Building: new lab & office for materials research / physics, University Salzburg", "context": ["material", "materialforschung", "physik", "university", "universität", "laboratory"], "values": [] },
+    { "label": "Undercounter cabinets (Unterschränke) present as a category", "context": ["under-counter", "undercounter", "unterschrank"], "values": [] },
+    { "label": "Fume hood / digestorium present", "context": ["fume", "digestor"], "values": [] },
+    { "label": "Gas cylinder safety cabinet per EN 14470", "context": ["gas cylinder", "safety cabinet", "gasflaschen"], "values": ["14470"] },
+    { "label": "Sanitary / water installation references DIN EN 1717 (backflow)", "context": ["water", "wasser", "sanitär", "sanitary", "media"], "values": ["1717"] },
+    { "label": "Laboratory glass washer (Laborglasspüler)", "context": ["glass washer", "glassp", "laborgl"], "values": [] },
+    { "label": "Fume hood rod material: rods 30mm, 18 connectors, 3x3 grid", "context": ["rod", "fume hood"], "values": ["30", "18"] }
+  ]
 }

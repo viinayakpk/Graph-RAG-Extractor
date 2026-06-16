@@ -25,6 +25,14 @@ function numberTokens(text: string): string[] {
     .filter((t) => t.length > 0);
 }
 
+// Measurement values only: at most one decimal separator. A token with two or more
+// separators is a multi-segment identifier (a room / position code like
+// "07.04.01.01"), not a quantity or dimension — those are verified structurally,
+// not here, and must not dilute the spec-value faithfulness signal.
+function valueTokens(text: string): string[] {
+  return numberTokens(text).filter((t) => (t.match(/[.,]/g) ?? []).length <= 1);
+}
+
 // Locale-tolerant forms of one number token, compared as whole values.
 function forms(token: string): Set<string> {
   return new Set([
@@ -80,6 +88,7 @@ export function verifyGrounding(
       req.section_heading ?? "",
       req.item_number ?? "",
       req.category_code ?? "",
+      req.standards.join(" "), // standard codes (DIN/EN/ISO…) are identifiers, trusted as grounded
     ];
     let missingChunk = false;
     for (const id of req.source_chunk_ids) {
@@ -89,7 +98,7 @@ export function verifyGrounding(
     }
     const grounded = groundedNumbers(sourceParts.join("\n"));
 
-    const tokens = numberTokens(req.description_en);
+    const tokens = valueTokens(req.description_en);
     if (tokens.length === 0) return req;
     stats.leavesChecked++;
 

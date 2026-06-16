@@ -157,6 +157,7 @@ function buildRequirement(
     category_code: rep.category_code,
     section_heading: rep.section_heading,
     item_number: rep.item_number,
+    source_language: rep.source_language,
   };
 }
 

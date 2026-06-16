@@ -1,0 +1,444 @@
+{
+  "bulletPoint": "LV_Fahrradgaragen (1).pdf",
+  "description": {},
+  "priority": "must",
+  "confidence": null,
+  "equivalenceAllowed": null,
+  "fullfillable": null,
+  "status": "waitingForAnalysis",
+  "aiReasoning": null,
+  "feedback": null,
+  "feedbackText": null,
+  "openQuestionId": null,
+  "workspaceDocumentChunkIdArray": [],
+  "citedProductIdArray": [],
+  "citedPersonIdArray": [],
+  "deliverableArray": [
+    {
+      "bulletPoint": "Bicycle Garage Supply and Installation",
+      "description": {},
+      "priority": "must",
+      "confidence": null,
+      "equivalenceAllowed": null,
+      "fullfillable": null,
+      "status": "waitingForAnalysis",
+      "aiReasoning": null,
+      "feedback": null,
+      "feedbackText": null,
+      "openQuestionId": null,
+      "workspaceDocumentChunkIdArray": [],
+      "citedProductIdArray": [],
+      "citedPersonIdArray": [],
+      "deliverableArray": [
+        {
+          "bulletPoint": "Garage Structure",
+          "description": {},
+          "priority": "must",
+          "confidence": null,
+          "equivalenceAllowed": null,
+          "fullfillable": null,
+          "status": "waitingForAnalysis",
+          "aiReasoning": null,
+          "feedback": null,
+          "feedbackText": null,
+          "openQuestionId": null,
+          "workspaceDocumentChunkIdArray": [],
+          "citedProductIdArray": [],
+          "citedPersonIdArray": [],
+          "deliverableArray": [
+            {
+              "bulletPoint": "Provide bicycle garages",
+              "description": {
+                "en": "The tender includes the provision of bicycle garages as specified in the document.",
+                "de": "Fahrradgaragen"
+              },
+              "priority": "must",
+              "confidence": "low",
+              "equivalenceAllowed": null,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__section_01_01__i1"
+              ]
+            },
+            {
+              "bulletPoint": "Supply and install modular bicycle garage with gravel roof",
+              "description": {
+                "en": "The subject of the tender is the delivery and installation of 2 bicycle garage systems, each consisting of 3 lockable bicycle garages.\n\nSupply and install a modular bicycle garage system for 3 separately lockable single garages according to DIN 79008, ADFC-certified system.\n\nThe garage must have dimensions: length 2.50m, depth 2.00m, height approx. 1.65m.\n\nThe load-bearing structure must be made of galvanized, folded steel sheet, statically designed according to relevant standards, material thickness 2mm.\n\nFacade cladding must be made of steel sheet, surface powder-coated with universal polyester powder, color RAL 7016 anthracite grey, with corrosion protection according to C3 per DIN EN ISO 12944-2; all earth-contacting parts must be stainless steel.\n\nThe roof must be a gravel roof made of sustainable timber construction, built from inside to outside: OSB-3 board approx. 15mm, EPDM roofing membrane approx. 1.5mm, root barrier fleece, round gravel 16/32mm approx. 50mm high, with roof edge made of smooth sheet with corrosion protection C3, powder-coated like facade cladding.\n\nDrainage must be via main and emergency drain DN50 made of plastic, internal downpipe, water outlet centered and below the support frame.\n\nEach single garage must have a single-leaf steel door made of folded galvanized steel sheet, powder-coated like facade cladding.\n\nDoors must be equipped with aluminum handle set with inside lever as emergency opening, door damper, and digital battery-operated locking cylinder with connection to a booking platform.\n\nClear door openings must be at least 0.70m wide and 1.45m high.\n\nThe design must be based on wind load zone up to 3, snow load approx. 1.1 kN/m², maintenance load approx. 1.1 kN/m².\n\nThe garage must be installed without ground anchoring on the existing water-bound path according to manufacturer's specifications, with leveling feet to compensate for slopes up to approx. 2%.\n\nThe execution must be complete including all ancillary services required for intended use.\n\nThe quantity is 2 units.",
+                "de": "Gegenstand der Ausschreibung ist die Lieferung und Aufstellung von 2 Stück Fahrradgaragensystemen besteht aus jeweils 3 abschließbaren Fahrradgaragen.\n\nLiefern und Montieren einer Fahrradgarage im Baukastensystem für 3 separat abschließbare Einzelgaragen nach DIN 79008, ADFC-zertifiziertes System\n\nAbmessungen: Länge 2,50m, Tiefe 2,00m, Höhe ca. 1,65m.\n\nTragkonstruktion aus verzinktem, gekantetem Stahlblech, statisch bemessen nach den einschlägigen Normen, Materialstärke 2mm.\n\nFassadenbekleidung aus Stahlblech, Oberfläche pulverbeschichtet mit Universal-Polyesterpulver, Farbe RAL 7016 anthrazitgrau, mit Korrosionsschutz in Anlehung an C3 nach DIN EN ISO 12944-2, alle erdberührendene Teile aus Edelstahl\n\nKiesdach\nDach aus nachhaltiger Holzkonstruktion\nAufbau von innen nach außen bestehend aus\n- OSB-3-Platte, Dicke ca. 15mm\n- EPDM-Dachbahn, Dicke ca. 1,5mm\n- Wurzelschutzvlies\n- Rundkies, Körnung 16/32mm, Höhe ca. 50mm\nmit Dachrand aus Glattblech mit Korrosionsschutz C3, pulverbeschichtet analog Fassadenbekleidung.\n\nEntwässerung über Haupt- und Notablauf DN50 aus Kunststoff, Fallrohr innenliegend, Wasseraustritt mittig und unterhalb des Tragkorpus.\n\nEinflüglige Stahltür je Einzelgarage aus gekantetem verzinktem Stahlblech, pulverbeschichtet analog Fassadenbekleidung.\n\nAusstattung mit Aluminium-Drückergarnitur mit innenseitiger Klinke als Notfallöffnung, Türdämpfer und digitalen, batteriebetriebenen Schließzylinder mit Anschluss an eine Buchungsplattform.\n\nlichte Türöffnungen: mind. Breite 0,70m x Höhe 1,45m\n\nBemessungsgrundlagen\nWindlastzone bis Zone 3\nSchneelast ca. 1,1kN/m²\nWartungslast ca. 1,1 kN/m²\n\nAufstellen ohne Bodenverankerung auf vorhandener wassergebundener Wegedecke gemäß Herstellerangaben mit Nivellierfüßen zum Ausgleich von Gefälle bis ca. 2%.\n\nDie Ausführung erfolgt komplett einschließlich aller für den bestimmungsgemäßen Gebrauch erforderlichen Nebenleistungen."
+              },
+              "priority": "must",
+              "confidence": "high",
+              "equivalenceAllowed": false,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__section_02_02__i2",
+                "lv-fahrradgaragen-1-__lv-position_01_01_0010__i3"
+              ]
+            },
+            {
+              "bulletPoint": "Provide gravel roof for bicycle boxes",
+              "description": {
+                "en": "The bicycle boxes must have a gravel roof.",
+                "de": "Die Fahrradboxen erhalten ein Kiesdach"
+              },
+              "priority": "must",
+              "confidence": "high",
+              "equivalenceAllowed": null,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__section_02_02__i2"
+              ]
+            }
+          ],
+          "procurementDocumentChunkIdArray": [
+            "lv-fahrradgaragen-1-__section_01_01__i1",
+            "lv-fahrradgaragen-1-__section_02_02__i2",
+            "lv-fahrradgaragen-1-__lv-position_01_01_0010__i3",
+            "lv-fahrradgaragen-1-__section_02_02__i2"
+          ]
+        },
+        {
+          "bulletPoint": "Installation Requirements",
+          "description": {},
+          "priority": "must",
+          "confidence": null,
+          "equivalenceAllowed": null,
+          "fullfillable": null,
+          "status": "waitingForAnalysis",
+          "aiReasoning": null,
+          "feedback": null,
+          "feedbackText": null,
+          "openQuestionId": null,
+          "workspaceDocumentChunkIdArray": [],
+          "citedProductIdArray": [],
+          "citedPersonIdArray": [],
+          "deliverableArray": [
+            {
+              "bulletPoint": "Install directly on existing water-bound surface",
+              "description": {
+                "en": "The bicycle garages are to be installed directly on the existing water-bound road surface.",
+                "de": "und sind direkt auf die vorhandene wassergebundene Wegedecke aufzustellen."
+              },
+              "priority": "must",
+              "confidence": "high",
+              "equivalenceAllowed": null,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__section_02_02__i2"
+              ]
+            }
+          ],
+          "procurementDocumentChunkIdArray": [
+            "lv-fahrradgaragen-1-__section_02_02__i2"
+          ]
+        },
+        {
+          "bulletPoint": "Accessories",
+          "description": {},
+          "priority": "must",
+          "confidence": null,
+          "equivalenceAllowed": null,
+          "fullfillable": null,
+          "status": "waitingForAnalysis",
+          "aiReasoning": null,
+          "feedback": null,
+          "feedbackText": null,
+          "openQuestionId": null,
+          "workspaceDocumentChunkIdArray": [],
+          "citedProductIdArray": [],
+          "citedPersonIdArray": [],
+          "deliverableArray": [
+            {
+              "bulletPoint": "Supply and install bicycle holder with entry rail",
+              "description": {
+                "en": "Supply and install a bicycle holder with an entry rail made of stainless steel for comfortable guidance of the wheels, suitable for tire widths from 25 to 65 mm, with a front wheel holder to lock the wheel and prevent rolling out.\n\nThe bidder must enter the chosen brand in the provided field. The specified brand is BRIX-IT or equivalent.\n\nThe required quantity is 6 pieces.",
+                "de": "Fahrradhalter mit Einfahrtschiene aus Edelstahl zur komfortablen Führung der Räder liefern und montieren, für Reifenbreite von 25 bis 65mm, Vorderradhalter zur Arretierung des Rades und Verhinderung des Herausrollens.\n\nFabrikat: BRIX-IT oder gleichwertig gewähltes Fabrikat: '..................................................' vom Bieter einzutragen\n\n6 St"
+              },
+              "priority": "must",
+              "confidence": "high",
+              "equivalenceAllowed": true,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__lv-position_01_01_0020__i4"
+              ]
+            },
+            {
+              "bulletPoint": "Supply and install swiveling LED light strip",
+              "description": {
+                "en": "Supply and install a swiveling LED light strip, battery-operated, with integrated motion sensor and energy-saving timer.",
+                "de": "schwenkbare LED-Lichtleiste liefern und montieren, batteriebetrieben, mit integriertem Bewegungsensor und energiesparender Zeitschaltung"
+              },
+              "priority": "must",
+              "confidence": "high",
+              "equivalenceAllowed": null,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__lv-position_01_01_0050__i5"
+              ]
+            }
+          ],
+          "procurementDocumentChunkIdArray": [
+            "lv-fahrradgaragen-1-__lv-position_01_01_0020__i4",
+            "lv-fahrradgaragen-1-__lv-position_01_01_0050__i5"
+          ]
+        },
+        {
+          "bulletPoint": "Protective Coating",
+          "description": {},
+          "priority": "must",
+          "confidence": null,
+          "equivalenceAllowed": null,
+          "fullfillable": null,
+          "status": "waitingForAnalysis",
+          "aiReasoning": null,
+          "feedback": null,
+          "feedbackText": null,
+          "openQuestionId": null,
+          "workspaceDocumentChunkIdArray": [],
+          "citedProductIdArray": [],
+          "citedPersonIdArray": [],
+          "deliverableArray": [
+            {
+              "bulletPoint": "Apply anti-graffiti coating",
+              "description": {
+                "en": "Apply an anti-graffiti coating using PU powder with DB certification, color RAL 7016 anthracite grey.",
+                "de": "Beschichtung mit Antigraffiti-Pulver PU, DB-Zertifizierung, Farbe RAL 7016 anthrazitgrau"
+              },
+              "priority": "must",
+              "confidence": "high",
+              "equivalenceAllowed": false,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__lv-position_01_01_0060__i6"
+              ]
+            }
+          ],
+          "procurementDocumentChunkIdArray": [
+            "lv-fahrradgaragen-1-__lv-position_01_01_0060__i6"
+          ]
+        }
+      ],
+      "procurementDocumentChunkIdArray": [
+        "lv-fahrradgaragen-1-__section_01_01__i1",
+        "lv-fahrradgaragen-1-__section_02_02__i2",
+        "lv-fahrradgaragen-1-__lv-position_01_01_0010__i3",
+        "lv-fahrradgaragen-1-__section_02_02__i2",
+        "lv-fahrradgaragen-1-__section_02_02__i2",
+        "lv-fahrradgaragen-1-__lv-position_01_01_0020__i4",
+        "lv-fahrradgaragen-1-__lv-position_01_01_0050__i5",
+        "lv-fahrradgaragen-1-__lv-position_01_01_0060__i6"
+      ]
+    },
+    {
+      "bulletPoint": "Digital Booking Platform",
+      "description": {},
+      "priority": "must",
+      "confidence": null,
+      "equivalenceAllowed": null,
+      "fullfillable": null,
+      "status": "waitingForAnalysis",
+      "aiReasoning": null,
+      "feedback": null,
+      "feedbackText": null,
+      "openQuestionId": null,
+      "workspaceDocumentChunkIdArray": [],
+      "citedProductIdArray": [],
+      "citedPersonIdArray": [],
+      "deliverableArray": [
+        {
+          "bulletPoint": "Platform Provision and Setup",
+          "description": {},
+          "priority": "must",
+          "confidence": null,
+          "equivalenceAllowed": null,
+          "fullfillable": null,
+          "status": "waitingForAnalysis",
+          "aiReasoning": null,
+          "feedback": null,
+          "feedbackText": null,
+          "openQuestionId": null,
+          "workspaceDocumentChunkIdArray": [],
+          "citedProductIdArray": [],
+          "citedPersonIdArray": [],
+          "deliverableArray": [
+            {
+              "bulletPoint": "Provide booking platform",
+              "description": {
+                "en": "The tender includes the provision of a booking platform as specified in the document.",
+                "de": "Buchungsplattform"
+              },
+              "priority": "must",
+              "confidence": "low",
+              "equivalenceAllowed": null,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__section_01_01__i1"
+              ]
+            },
+            {
+              "bulletPoint": "Deliver, install, and set up digital booking platform",
+              "description": {
+                "en": "Deliver, install, and set up a digital, cloud-based booking platform exclusively usable via smartphone app (iOS/Android) with multi-level AI-based and telephone customer support, without an on-site stationary terminal.\n\nProvide own QR code and booking instructions.\n\nSet up the portal including consultation of the operator for provision of master data, setup of the location on the operator's server.\n\nOpen power-grid-independent, Bluetooth-based locking systems.\n\nProvide app functions: search and location selection with interactive map view, selection of parking facilities via link or QR code.\n\nProvide app functions: booking and management with time-staggered price overview, flexible tariff systems (e.g., pay-as-you-go, monthly and annual rentals).\n\nProvide app functions: payment and confirmation with various payment methods (e.g., credit card, Klarna, Apple Pay, Google Pay), automatic invoicing and booking confirmation via email.\n\nProvide app functions: notifications with reminder before expiry of booking period, information on ongoing or completed bookings.\n\nProvide app functions: user account with registration, login, change of personal data, booking history, cancellation functions.\n\nProvide app functions: data protection and security with GDPR-compliant server provision, encrypted data transmission.\n\nProvide automated AI-based customer support: 24/7 customer support in 14 languages as first level support.\n\nProvide customer support: second level support hotline.\n\nProvide operator web portal: location and facility management with central management of all parking facilities and locations, detailed configuration of devices (e.g., technical parameters, capacities, safety functions).\n\nProvide operator web portal: tariff and booking management with individual setting of tariff systems, rental durations and staggered prices, adjustment of booking conditions and reservation options.\n\nProvide operator web portal: user and security management with management of users, rights and access permissions, integration of Single Sign-On (SSO) for external identity providers, GDPR-compliant data storage and regular updates of security standards.\n\nProvide operator web portal: evaluation and reporting functions with real-time status display of all devices and statistical evaluation of occupancy rates, management of refunds and detailed billing.",
+                "de": "Digitale, cloudbasierte Buchungsplattform liefern, installieren und einrichten ausschließlich nutzbar per Smartphone-App (iOS / Android) und mehrstufigen KI-basierten und telefonischen Kundensupport, ohne stationären Terminal vor Ort.\n\nMit eigenem QR-Code und Buchungsanleitung.\n\nEinrichtung des Portals inkl. Beratung des Betreibers zur Bereitstellung der Stammdaten, Einrichtung des Standortes auf dem Server des Betreibers\n\nÖffnen von stromnetzunabhängiger, Bluetooth-basierter, stromnetzumabhängiger Schließsysteme\n\nSuche und Standortwahl: interaktive Kartenansicht, Auswahl der Abstellanlagen per Link oder QR-Code.\n\nBuchung und Verwaltung: zeitlich gestaffelte Preisübersicht, flexible Tarifsysteme (z. B. Pay-as-yougo, Monats- und Jahresmieten).\n\nZahlung und Bestätigung: verschiedene Zahlungsmethoden (z. B. Kreditkarte, Klarna, Apple Pay, Google Pay), automatische Rechnungsstellung und Buchungsbestätigung per E-Mail.\n\nBenachrichtigungen: Erinnerung vor Ablauf des Buchungszeitraums, Informationen zu laufenden oder beendeten Buchungen.\n\nNutzerkonto: Registrierung, Login, Änderung persönlicher Daten, Buchungshistorie, Stornofunktionen.\n\nDatenschutz und Sicherheit: DSGVO-konforme Serverbereitstellung, verschlüsselte Datenübertragung.\n\nAutomatisierter KI-basierter Kundensupport: 24/7 Kundensupport in 14 Sprachen als First Level Support.\n\nKundensupport: Second Level Support Hotline.\n\nStandort- und Anlagenverwaltung: zentrale Verwaltung aller Abstellanlagen und Standorte und detaillierte Konfiguration der Geräte (z. B. technische Parameter, Kapazitäten, Sicherheitsfunktionen).\n\nTarif- und Buchungsmanagement: individuelle Einstellung von Tarifsystemen, Mietdauern und gestaffelten Preisen und Anpassung von Buchungsbedingungen und Reservierungsoptionen.\n\nNutzer- und Sicherheitsmanagement: Verwaltung der Nutzer, Rechte und Zugangsberechtigungen, Integration von Single Sign-On (SSO) für externe Identitätsprovider, DSGVO-konforme Datenhaltung und regelmäßige Updates der Sicherheitsstandards.\n\nAuswertungs- und Reporting-Funktionen: Echtzeit-Statusanzeige aller Geräte und statistische Auswertung der Belegungsraten, Verwaltung von Rückerstattungen und detaillierten Abrechnungen."
+              },
+              "priority": "must",
+              "confidence": "high",
+              "equivalenceAllowed": false,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__lv-position_02_02_0010__i7"
+              ]
+            }
+          ],
+          "procurementDocumentChunkIdArray": [
+            "lv-fahrradgaragen-1-__section_01_01__i1",
+            "lv-fahrradgaragen-1-__lv-position_02_02_0010__i7"
+          ]
+        },
+        {
+          "bulletPoint": "Usage Fee",
+          "description": {},
+          "priority": "must",
+          "confidence": null,
+          "equivalenceAllowed": null,
+          "fullfillable": null,
+          "status": "waitingForAnalysis",
+          "aiReasoning": null,
+          "feedback": null,
+          "feedbackText": null,
+          "openQuestionId": null,
+          "workspaceDocumentChunkIdArray": [],
+          "citedProductIdArray": [],
+          "citedPersonIdArray": [],
+          "deliverableArray": [
+            {
+              "bulletPoint": "Provide usage fee for booking platform",
+              "description": {
+                "en": "Provide the usage fee for the user and operator web portal and smartphone app, including server operation and maintenance, regular updates, and telephone/remote support. Fee per digital locking cylinder for 60 months.",
+                "de": "Nutzungsgebühr des Nutzer- und Betreiber-Web-Portal sowie Smartphone-App, inkl. Betrieb und Wartung des Servers, regelmäßige UpDates, Telefon-/remote-Support. Gebühr je digitalen Schließzylinder für 60 Monate."
+              },
+              "priority": "must",
+              "confidence": "high",
+              "equivalenceAllowed": null,
+              "fullfillable": null,
+              "status": "waitingForAnalysis",
+              "aiReasoning": null,
+              "feedback": null,
+              "feedbackText": null,
+              "openQuestionId": null,
+              "workspaceDocumentChunkIdArray": [],
+              "citedProductIdArray": [],
+              "citedPersonIdArray": [],
+              "deliverableArray": [],
+              "procurementDocumentChunkIdArray": [
+                "lv-fahrradgaragen-1-__lv-position_02_02_0020__i8"
+              ]
+            }
+          ],
+          "procurementDocumentChunkIdArray": [
+            "lv-fahrradgaragen-1-__lv-position_02_02_0020__i8"
+          ]
+        }
+      ],
+      "procurementDocumentChunkIdArray": [
+        "lv-fahrradgaragen-1-__section_01_01__i1",
+        "lv-fahrradgaragen-1-__lv-position_02_02_0010__i7",
+        "lv-fahrradgaragen-1-__lv-position_02_02_0020__i8"
+      ]
+    }
+  ],
+  "procurementDocumentChunkIdArray": [
+    "lv-fahrradgaragen-1-__section_01_01__i1",
+    "lv-fahrradgaragen-1-__section_01_01__i1",
+    "lv-fahrradgaragen-1-__section_02_02__i2",
+    "lv-fahrradgaragen-1-__lv-position_01_01_0010__i3",
+    "lv-fahrradgaragen-1-__section_02_02__i2",
+    "lv-fahrradgaragen-1-__section_02_02__i2",
+    "lv-fahrradgaragen-1-__lv-position_01_01_0020__i4",
+    "lv-fahrradgaragen-1-__lv-position_01_01_0050__i5",
+    "lv-fahrradgaragen-1-__lv-position_01_01_0060__i6",
+    "lv-fahrradgaragen-1-__lv-position_02_02_0010__i7",
+    "lv-fahrradgaragen-1-__lv-position_02_02_0020__i8"
+  ]
+}

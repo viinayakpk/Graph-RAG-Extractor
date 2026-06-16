@@ -21,6 +21,7 @@ export const LlmExtractionItemSchema = z.object({
   cross_referenced_positions: z.array(z.string()).default([]),
   category_code: z.string().nullable().default(null),
   item_number: z.string().nullable().default(null),
+  source_language: z.string().nullable().default(null),
 });
 
 export const LlmExtractionArraySchema = z.array(LlmExtractionItemSchema);
@@ -83,4 +84,5 @@ export const ConsolidatedRequirementSchema: z.ZodType<ConsolidatedRequirement> =
     category_code: z.string().nullable(),
     section_heading: z.string().nullable(),
     item_number: z.string().nullable(),
+    source_language: z.string().nullable(),
   });

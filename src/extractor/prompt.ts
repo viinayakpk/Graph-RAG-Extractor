@@ -17,7 +17,8 @@ Each object has:
 - referenced_annexes: array of annex / plan / drawing references named in the text (e.g. "Annex A", "Ansicht [B]"), [] if none
 - cross_referenced_positions: array of other item / position codes the text explicitly names, [] if none
 - category_code: null unless the text itself states a category code
-- item_number: the item / position number if this block is a labelled item, otherwise null`;
+- item_number: the item / position number if this block is a labelled item, otherwise null
+- source_language: the ISO 639-1 code of the document's original language (e.g. "en", "de", "fr", "it", "es")`;
 
 const BASE_INSTRUCTIONS = `You are a procurement analyst extracting what a buyer requires from a tender, in any language.
 Extract EVERY requirement, specification, and obligation — administrative and technical alike; do not skip ones that seem minor.

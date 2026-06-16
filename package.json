@@ -4,10 +4,10 @@
   "description": "Procurement tender PDF → ProcurementMatchDeliverable tree extractor",
   "type": "module",
   "scripts": {
-    "start": "tsx src/cli.ts",
+    "start": "node --env-file=.env --import tsx src/cli.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "dev": "tsx watch src/cli.ts"
+    "dev": "node --env-file=.env --import tsx --watch src/cli.ts"
   },
   "dependencies": {
     "openai": "^4.47.0",
@@ -23,6 +23,6 @@
     "typescript": "^5.5.3"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.6.0"
   }
 }

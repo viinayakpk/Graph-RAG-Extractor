@@ -33,13 +33,21 @@ function buildUserMessage(chunk: Chunk): string {
 // extraction JSON overflows its output-token cap — splitting lets each half fit.
 // Returns null when the content is a single line and cannot be divided.
 function splitChunkContent(chunk: Chunk): [Chunk, Chunk] | null {
+  const halve = (parts: string[], joiner: string): [Chunk, Chunk] => {
+    const mid = Math.ceil(parts.length / 2);
+    return [
+      { ...chunk, content: parts.slice(0, mid).join(joiner) },
+      { ...chunk, content: parts.slice(mid).join(joiner) },
+    ];
+  };
   const lines = chunk.content.split("\n");
-  if (lines.length < 2) return null;
-  const mid = Math.ceil(lines.length / 2);
-  return [
-    { ...chunk, content: lines.slice(0, mid).join("\n") },
-    { ...chunk, content: lines.slice(mid).join("\n") },
-  ];
+  if (lines.length >= 2) return halve(lines, "\n");
+  // A single over-dense line: split on words, then on characters as a last resort,
+  // so a one-line block can still be extracted in halves instead of being dropped.
+  const words = chunk.content.split(" ");
+  if (words.length >= 2) return halve(words, " ");
+  if (chunk.content.length >= 2) return halve([...chunk.content], "");
+  return null; // a single character — cannot split (and cannot overflow either)
 }
 
 interface TokenUsage {
