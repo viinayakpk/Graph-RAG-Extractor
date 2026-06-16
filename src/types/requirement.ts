@@ -43,6 +43,7 @@ export interface ChunkExtraction {
   cross_referenced_positions: string[];
   category_code: string | null;
   item_number: string | null;
+  source_language: string | null;
 }
 
 export interface ConsolidatedRequirement {
@@ -60,4 +61,5 @@ export interface ConsolidatedRequirement {
   category_code: string | null;
   section_heading: string | null;
   item_number: string | null;
+  source_language: string | null;
 }

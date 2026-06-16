@@ -29,6 +29,7 @@ function enrich(item: LlmExtractionItem, chunk: Chunk): ChunkExtraction {
     cross_referenced_positions: item.cross_referenced_positions,
     category_code: chunk.category_code ?? item.category_code,
     item_number: chunk.lv_position ?? item.item_number,
+    source_language: item.source_language ? item.source_language.toLowerCase().slice(0, 2) : null,
   };
 }
 
