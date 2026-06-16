@@ -37,6 +37,21 @@ export const strategyConfig = {
   minVorbemerkungen: 10,
 } as const;
 
+export const positionCodeConfig = {
+  /** Labelled-position code families recognised for enrichment (lv_position /
+   *  category_code). The samples are Austrian/German LVs (ÖNORM A/B 2063
+   *  "Ordnungszahl"), so those families live here — but this is a *specialisation
+   *  layer*, not a requirement: any tender without these codes still chunks via the
+   *  generic labelled-item path (numbered lists, headings). To support another
+   *  procurement format, add its code family here — no code change elsewhere. */
+  /** Leistungsgruppe.Unterleistungsgruppe.serial, e.g. "01.01.0010" (serial 3–5 digits). */
+  threePart: String.raw`\d{2}\.\d{2}\.\d{3,5}`,
+  /** Building/room code + four numeric segments, e.g. "GU.07.09.01.01". */
+  fivePartAlpha: String.raw`[A-Z]{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2}`,
+  /** All-zero prefix marking a general/preamble (vorbemerkungen) position. */
+  vorbemerkungenPrefix: "00.00.00",
+} as const;
+
 export const chunkerConfig = {
   /** A heading line is short; longer lines are prose, not headings. */
   maxHeadingLength: 60,

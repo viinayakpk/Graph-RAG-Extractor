@@ -1,23 +1,19 @@
-// Austrian/German LV position numbers (Ordnungszahl, OZ) per ÖNORM A/B 2063.
-// The hierarchy depth and serial width vary between projects and norm-book
-// editions, so these match the common families rather than one rigid format.
-// Anything outside them is still captured by the chunker's generic labelled-item
-// path — just without OZ-specific enrichment (lv_position / category_code).
+// Labelled-position code families (ÖNORM A/B 2063 "Ordnungszahl", OZ). The actual
+// patterns live in `positionCodeConfig` so a new tender format is a config edit, not
+// a code change; this module just compiles them. Anything outside these families is
+// still captured by the chunker's generic labelled-item path — just without the
+// position/category enrichment.
+import { positionCodeConfig } from "../config.js";
 
 // Leistungsgruppe.Unterleistungsgruppe.serial — e.g. "01.01.0010".
-// The serial runs 3–5 digits across editions, so it is not pinned to exactly 4.
-export const OZ_3PART_RE = /\d{2}\.\d{2}\.\d{3,5}/;
+export const OZ_3PART_RE = new RegExp(positionCodeConfig.threePart);
 
 // Building/room code + four numeric segments — e.g. "GU.07.09.01.01".
-export const OZ_5PART_ALPHA_RE = /[A-Z]{2}\.\d{2}\.\d{2}\.\d{2}\.\d{2}/;
+export const OZ_5PART_ALPHA_RE = new RegExp(positionCodeConfig.fivePartAlpha);
 
-// Vorbemerkungen (preamble) codes begin with an all-zero prefix that marks a
-// general, non-item position. The prefix is editioned — change it here if a tender
-// uses a different convention; a non-matching preamble simply routes through the
-// generic section path instead.
-const VORBEMERKUNGEN_PREFIX = "00.00.00";
+// Vorbemerkungen (preamble) codes begin with the all-zero prefix + two segments.
 export const OZ_VORBEMERKUNGEN_RE = new RegExp(
-  `${VORBEMERKUNGEN_PREFIX.replace(/\./g, "\\.")}\\.\\d{2}\\.\\d{2}`,
+  `${positionCodeConfig.vorbemerkungenPrefix.replace(/\./g, "\\.")}\\.\\d{2}\\.\\d{2}`,
 );
 
 // Anchored test for a whole trimmed token being any OZ format. Built from the
