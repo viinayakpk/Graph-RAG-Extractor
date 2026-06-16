@@ -1,7 +1,19 @@
 {
-  "_comment": "Ground truth for Christmas Lights Installation 2026 tender — populate after manual review",
+  "_comment": "Golden evaluation set — facts hand-verified against the source PDF. Each entry names a requirement (context keywords) and the exact value(s) that must appear on its leaf, the reference for checking extraction correctness.",
   "tender": "Christmas Lights Installation 2026",
   "source_file": "Tender_For_Christmas_Lights_Installation_2026.pdf",
-  "reviewed_at": null,
-  "requirements": []
+  "reviewed_at": "2026-06-14",
+  "requirements": [
+    { "label": "Install 23 sets of pea lights in memorial garden", "context": ["pea lights", "memorial garden"], "values": ["23"] },
+    { "label": "Install 2 snow fall column motifs", "context": ["snow", "motif"], "values": ["2"] },
+    { "label": "Comply with BS 7671 wiring regulations", "context": ["wiring", "bs 7671", "regulation"], "values": ["7671"] },
+    { "label": "Installation testing must begin 1 November 2026", "context": ["installation", "testing", "begin"], "values": ["1 november 2026"] },
+    { "label": "Switch-on date Saturday 28 November 2026", "context": ["switch"], "values": ["28 november"] },
+    { "label": "Deadline for submission 2 June 2026", "context": ["deadline", "submission", "submit"], "values": ["2 june 2026"] },
+    { "label": "Lights on 4pm-10pm weekdays, 4pm-11pm weekends", "context": ["4pm", "timer", "weekend"], "values": ["10pm", "11pm"] },
+    { "label": "24-hour call-out for major faults", "context": ["call-out", "call out", "fault"], "values": ["24"] },
+    { "label": "Dismantle and remove lights no later than 12 January", "context": ["dismantl", "remove"], "values": ["12 january"] },
+    { "label": "Provide public liability insurance", "context": ["public liability"], "values": [] },
+    { "label": "Provide Highway Electrical Registration Scheme certificate", "context": ["highway electrical"], "values": [] }
+  ]
 }

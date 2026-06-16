@@ -1,7 +1,18 @@
 {
-  "_comment": "Ground truth for LV Fahrradgaragen tender — populate after manual review",
+  "_comment": "Golden evaluation set — facts hand-verified against the source PDF. Each entry names a requirement (context keywords) and the exact value(s) that must appear on its leaf, the reference for checking extraction correctness.",
   "tender": "LV Fahrradgaragen",
-  "source_file": "LV_Fahrradgaragen.pdf",
-  "reviewed_at": null,
-  "requirements": []
+  "source_file": "LV_Fahrradgaragen (1).pdf",
+  "reviewed_at": "2026-06-14",
+  "requirements": [
+    { "label": "Garage dimensions 2,50 x 2,00 x 1,65 m", "context": ["bicycle garage", "fahrradgarage", "modular"], "values": ["2,50", "2,00", "1,65"] },
+    { "label": "Support structure material thickness 2mm", "context": ["steel", "stahl", "structure", "tragkonstruktion"], "values": ["2mm"] },
+    { "label": "Facade colour RAL 7016 anthracite", "context": ["facade", "fassade", "powder", "anthrazit", "anthracite"], "values": ["7016"] },
+    { "label": "Garage system per DIN 79008 (ADFC certified)", "context": ["garage", "fahrradgarage", "adfc"], "values": ["79008"] },
+    { "label": "Snow load approx. 1,1 kN/m2", "context": ["snow", "schnee", "load", "last", "bemessung", "design"], "values": ["1,1"] },
+    { "label": "Clear door opening 0,70 x 1,45 m", "context": ["door", "tür", "opening", "öffnung"], "values": ["0,70", "1,45"] },
+    { "label": "Three separately lockable single garages", "context": ["lockable", "abschließbar", "single garage", "einzelgarage"], "values": ["3"] },
+    { "label": "Bicycle holder accepts 'or equivalent' (BRIX-IT oder gleichwertig)", "context": ["bicycle holder", "fahrradhalter", "entry rail", "einfahrtschiene"], "field": { "equivalenceAllowed": true } },
+    { "label": "Booking platform support in 14 languages", "context": ["booking platform", "buchungsplattform", "support", "kundensupport", "web portal"], "values": ["14"] },
+    { "label": "Usage fee per locking cylinder for 60 months", "context": ["usage fee", "nutzungsgebühr", "schließzylinder", "cylinder"], "values": ["60"] }
+  ]
 }
