@@ -1,18 +1,9 @@
 services:
   pipeline:
     build: .
-    env_file: .env
+    env_file: .env                    # reads DEEPSEEK_API_KEY etc.
     volumes:
-      - ./pdfs:/data/input:ro
-      - ./outputs:/data/output
-    # Process all three tenders in a single run.
-    # PDF filenames must match exactly what you placed in ./pdfs/
-    command:
-      - "--pdf"
-      - "/data/input/Tender_For_Christmas_Lights_Installation_2026.pdf"
-      - "--pdf"
-      - "/data/input/Salzburg Laboratory Tender.pdf"
-      - "--pdf"
-      - "/data/input/LV_Fahrradgaragen.pdf"
-      - "--output"
-      - "/data/output"
+      - ./pdfs:/data/input:ro         # put your tender PDFs here
+      - ./outputs:/data/output        # results appear here (one folder per tender)
+    # Process every PDF found in ./pdfs as its own tender.
+    command: ["--dir", "/data/input", "--output", "/data/output"]
