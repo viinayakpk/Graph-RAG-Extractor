@@ -32,12 +32,39 @@ function makeGroupNode(
   };
 }
 
+// The document's language: the most common non-null source_language across all
+// requirements, defaulting to "en". A tender is one language, so this resolves
+// per-leaf noise (e.g. an English line the model mislabelled "de").
+function dominantLanguage(requirements: ConsolidatedRequirement[]): string {
+  const counts = new Map<string, number>();
+  for (const r of requirements) {
+    const lang = r.source_language?.toLowerCase().slice(0, 2);
+    if (lang) counts.set(lang, (counts.get(lang) ?? 0) + 1);
+  }
+  let best = "en";
+  let bestCount = 0;
+  for (const [lang, n] of counts) {
+    if (n > bestCount) {
+      best = lang;
+      bestCount = n;
+    }
+  }
+  return best;
+}
+
 export async function buildTree(
   requirements: ConsolidatedRequirement[],
   tenderName: string,
   log: Logger
 ): Promise<ProcurementMatchDeliverable> {
   log.info({ requirements: requirements.length, tender: tenderName }, "building deliverable tree");
+
+  // A tender is written in one language; per-leaf source_language is occasionally
+  // noisy (the model may tag an English line "de"). Resolve it once, by majority, so
+  // the verbatim-original locale key is consistent and English documents get no
+  // spurious foreign key.
+  const docLanguage = dominantLanguage(requirements);
+  log.info({ docLanguage }, "resolved document language");
 
   // Semantic grouping via the LLM (the #1 evaluation criterion); deterministic
   // mechanical grouping is the fallback if the call fails.
@@ -46,7 +73,7 @@ export async function buildTree(
   const l1Map = new Map<string, { label: string; l2Nodes: ProcurementMatchDeliverable[]; chunkIds: string[] }>();
 
   for (const group of groups) {
-    const leaves = group.requirements.map(assembleLeaf);
+    const leaves = group.requirements.map((r) => assembleLeaf(r, docLanguage));
     const groupChunkIds = group.requirements.flatMap((r) => r.source_chunk_ids);
 
     const l2Node = makeGroupNode(group.l2Label, leaves, groupChunkIds);
