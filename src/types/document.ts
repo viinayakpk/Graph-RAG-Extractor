@@ -14,9 +14,9 @@ export interface TextLine {
 
 export interface ParsedPage {
   pageNumber: number;
-  /** Geometry-reconstructed lines, in reading order. The structural source of truth. */
+  /** Geometry-reconstructed lines, in reading order. */
   lines: TextLine[];
-  /** Lines joined and page-normalized — consumed by the current chunker. */
+  /** Lines joined and page-normalized. */
   cleanedText: string;
 }
 

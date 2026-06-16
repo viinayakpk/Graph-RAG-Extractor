@@ -45,14 +45,13 @@ export async function runPipeline(
   const consolidated = consolidate(extractions, log);
   log.info({ requirementCount: consolidated.length }, "consolidator done");
 
-  // Semantic linking: pull a deliverable's scattered pieces onto one leaf when no
-  // position code or exact text connects them (the brief's headline case). Gated
-  // so it can never fuse two distinct priced positions.
+  // Semantic linking: pull scattered pieces onto one leaf when no position code or
+  // exact text connects them; gated so it never fuses two distinct priced positions.
   const linked = await linkSemantic(consolidated, log);
   log.info({ before: consolidated.length, after: linked.length }, "semantic linking done");
 
-  // Faithfulness gate: verify every numeric value in a leaf's English description
-  // is present in its source chunks; honestly drop confidence to "low" otherwise.
+  // Faithfulness gate: verify every numeric value in a leaf's English description is
+  // present in its source chunks; drop confidence to "low" otherwise.
   const { requirements: verified } = verifyGrounding(linked, chunks, log);
 
   const tree = await buildTree(verified, documentProfile.filename, log);

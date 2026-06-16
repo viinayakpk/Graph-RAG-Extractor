@@ -9,30 +9,15 @@ import { exactMatchMergeRecord } from "./rules/exact-match.js";
 import { dedupMergeRecord } from "./rules/dedup.js";
 import { preambleCategoryMergeRecord } from "./rules/preamble-category.js";
 
-// ---------------------------------------------------------------------------
-// Consolidation turns per-chunk extractions into distinct requirements, pulling
-// every chunk that describes the same requirement onto one node. The hard rule:
-// a single chunk may be a source for *several* requirements (a vorbemerkungen
-// block states many specs; a room position is evidence for every spec of its
-// category), so we never partition chunks "one to one requirement".
-//
-// Stages:
-//   1. Category consolidation (Salzburg): each vorbemerkungen spec becomes its
-//      own leaf and collects all room-position chunk IDs of its category.
-//   2. Identity merge (everything else): union-find over extractions that are the
-//      same requirement — same OZ position split across pages, or exact textual
-//      duplicates within one section.
-//   3. Cross-reference linking: distinct requirements that name each other's OZ
-//      are *linked* (audit evidence), never merged.
-// ---------------------------------------------------------------------------
+// Consolidation turns per-chunk extractions into distinct requirements, pulling every
+// chunk for one requirement onto one node. Stages: category consolidation, identity
+// merge (union-find), cross-reference linking (no merge).
 
 const CONFIDENCE_RANK = { high: 3, medium: 2, low: 1 } as const;
 const PRIORITY_RANK = { must: 3, should: 2, optional: 1 } as const;
 
-// One extraction with a stable, unique key. A chunk can yield several
-// extractions, so the chunk_id alone is not unique — `${chunk_id}#${i}` is.
-// `order` is the extraction's position in document reading order, used to pick a
-// requirement's leading statement for the leaf title.
+// One extraction with a stable key (`${chunk_id}#${i}`) and a document-order index
+// used to pick the requirement's leading statement for the title.
 interface Unit extends ChunkExtraction {
   unitKey: string;
   order: number;
@@ -42,10 +27,8 @@ const unique = (xs: string[]): string[] => [...new Set(xs)];
 
 const normalize = (s: string): string => s.toLowerCase().replace(/\s+/g, " ").trim();
 
-// An OZ position code is globally unique (e.g. "01.01.0010", "GU.07.09.01.01").
-// A bare section item number ("3") is not — scoping identity merges to OZ codes
-// stops unrelated section items that share a number from being fused. Anchored
-// (OZ_LINE_RE) so a value like "01.01.0010 — see §3" is not treated as an OZ.
+// An OZ position code is globally unique; a bare section number is not. Scoping
+// identity merges to OZ codes stops unrelated items sharing a number from fusing.
 function isOzPosition(itemNumber: string | null): boolean {
   if (!itemNumber) return false;
   return OZ_LINE_RE.test(itemNumber);
@@ -60,12 +43,8 @@ function assignUnitKeys(extractions: ChunkExtraction[]): Unit[] {
   });
 }
 
-// Among extractions that describe the same requirement, the representative
-// supplies the body fields: the fullest description first (most complete statement
-// of the requirement), then highest confidence as a tiebreak. Priority takes the
-// strongest across the group (if any source says "must", the merged requirement is
-// "must"); standards/annexes are unioned. Nothing is lost: every source chunk is
-// still listed in source_chunk_ids.
+// The representative supplies the body fields: fullest description, then highest
+// confidence. Priority takes the strongest; standards/annexes are unioned.
 function pickRepresentative(units: Unit[]): Unit {
   return [...units].sort((a, b) => {
     const byLength = b.description_en.length - a.description_en.length;
@@ -74,11 +53,8 @@ function pickRepresentative(units: Unit[]): Unit {
   })[0]!;
 }
 
-// The leaf TITLE comes from the requirement's leading statement in document order,
-// not its longest paragraph. For an LV position split into sub-blocks (e.g. a
-// garage stated with a long "gravel roof" sub-spec), "fullest description" would
-// wrongly title the leaf after the sub-block; the leading extraction is the
-// position's own descriptor. The representative still supplies the description.
+// The leaf TITLE comes from the requirement's leading statement (document order),
+// not its longest paragraph — for an LV position that is its own descriptor.
 function leadUnit(units: Unit[]): Unit {
   return units.reduce((earliest, u) => (u.order < earliest.order ? u : earliest));
 }
@@ -92,16 +68,9 @@ function numbersOf(s: string): string[] {
   return (s.match(/\d[\d.,]*/g) ?? []).map((n) => n.replace(/[.,]+$/, "").replace(/[.,]/g, ""));
 }
 
-// When several extractions are unioned into one requirement — a single LV position
-// the model split into sub-specs (garage body, roof, door, load ratings), or a
-// deliverable named on one page and specced on another — keep every description
-// that adds something, in document order. Picking only the "fullest" single
-// description silently dropped the others (e.g. the garage's dimensions and load
-// ratings). A later part is skipped only when it is a restatement — its words are
-// almost entirely already present AND it introduces no new number. The number
-// guard is the safety rule: a part carrying any value not yet seen is always kept,
-// so no dimension, quantity, or tolerance can ever be lost to dedup. This only
-// drops redundant text; it never alters a value. A lone unit is returned unchanged.
+// Union the descriptions of merged extractions in document order, skipping a part
+// only when it restates earlier text AND introduces no new number — the number
+// guard guarantees no dimension/quantity is ever lost to dedup.
 function joinDescriptions(units: Unit[], pick: (u: Unit) => string | null): string | null {
   const seen = new Set<string>();
   const accTokens = new Set<string>();
@@ -161,7 +130,7 @@ function buildRequirement(
   };
 }
 
-// --- Stage 1: Salzburg category consolidation -----------------------------
+// Stage 1: category consolidation
 
 interface CategoryResult {
   requirements: ConsolidatedRequirement[];
@@ -220,7 +189,7 @@ function buildCategoryRequirements(
   return { requirements, emittedUnitKeys, consumedChunkIds };
 }
 
-// --- Stage 2: identity merge (union-find) ---------------------------------
+// Stage 2: identity merge (union-find)
 
 class DisjointSet {
   private parent = new Map<string, string>();
@@ -295,9 +264,8 @@ function consolidateRemaining(
     for (let i = 1; i < group.length; i++) ds.union(group[0]!.unitKey, group[i]!.unitKey);
   }
 
-  // (b) Exact textual duplicate within one section/category (e.g. staged delivery
-  //     stated on two pages). OZ positions are excluded — they merge by identity
-  //     above, so two distinct positions sharing a generic title never fuse.
+  // (b) Exact textual duplicate within one section/category. OZ positions excluded
+  //     (they merge by identity above), so distinct positions never fuse.
   const byDuplicate = new Map<string, Unit[]>();
   for (const u of units) {
     if (isOzPosition(u.item_number)) continue;
@@ -311,12 +279,9 @@ function consolidateRemaining(
     for (let i = 1; i < group.length; i++) ds.union(group[0]!.unitKey, group[i]!.unitKey);
   }
 
-  // (c) Entity resolution (Tier 1): the same spec repeated across positions — the
-  //     same cabinet in 30 rooms under 30 OZ codes — is one requirement that cites
-  //     all of its rooms, not 30 leaves. Block by category (compare like with like)
-  //     and match on identical normalized description: identical text is the same
-  //     spec, in any language, with no over-merge risk. The fuzzy residual
-  //     (paraphrased / cross-language) is left for a later embedding pass.
+  // (c) Entity resolution: the same spec repeated across positions (one cabinet in
+  //     many rooms) is one requirement. Block by category, match on identical
+  //     normalized description — no over-merge risk; fuzzy residual left for later.
   const byCanonical = new Map<string, Unit[]>();
   for (const u of units) {
     if (!u.category_code) continue; // structural block: only items carrying a category
@@ -345,7 +310,7 @@ function consolidateRemaining(
   return requirements;
 }
 
-// --- Stage 3: cross-reference linking (no merge) --------------------------
+// Stage 3: cross-reference linking (no merge)
 
 function linkCrossReferences(
   requirements: ConsolidatedRequirement[],
@@ -378,7 +343,7 @@ function linkCrossReferences(
   log.info({ links }, "cross-reference linking complete");
 }
 
-// --- Orchestration --------------------------------------------------------
+// Orchestration
 
 export function consolidate(
   extractions: ChunkExtraction[],

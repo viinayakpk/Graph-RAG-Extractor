@@ -7,11 +7,8 @@ import {
 import type { Chunk } from "../types/chunk.js";
 import type { ChunkExtraction } from "../types/requirement.js";
 
-// Attach chunker-supplied structural metadata to validated model content. The
-// chunker is authoritative for which chunk / file / page / section a requirement
-// came from, and for the OZ code and category derived from document structure —
-// so we take those from the chunk and only fall back to the model's value where
-// the chunk has none (e.g. a numbered item inside a free-text section).
+// Attach chunker-supplied metadata (chunk/file/page/position/category) to the
+// validated model content; the chunker is authoritative for it.
 function enrich(item: LlmExtractionItem, chunk: Chunk): ChunkExtraction {
   return {
     chunk_id: chunk.chunk_id,

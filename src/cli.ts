@@ -67,7 +67,7 @@ async function main(): Promise<void> {
   }
 }
 
-// Top-level await with try/catch — the brief mandates async/await, no .then()/.catch().
+// Top-level error handler for the CLI.
 try {
   await main();
 } catch (err) {

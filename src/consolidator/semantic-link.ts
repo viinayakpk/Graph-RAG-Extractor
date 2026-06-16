@@ -5,24 +5,10 @@ import { buildClient, modelName } from "../extractor/client.js";
 import { OZ_LINE_RE } from "../parser/oz-patterns.js";
 import { linkingConfig } from "../config.js";
 
-// ---------------------------------------------------------------------------
-// Semantic linking — the brief's #1-scrutinised case: a deliverable named in one
-// place and specified in another, with NO shared position code or exact text
-// (e.g. Fahrradgaragen's Vorbemerkungen "supply 2 bicycle garage systems" and
-// position 01.01.0010 that specs the garage). The deterministic consolidator
-// cannot see these; an LLM discriminator can.
-//
-// Safety, because these are priced documents: this stage can only ever pull a
-// scope/prose statement onto a priced position, never fuse two priced positions.
-// Two guarantees enforce that:
-//   1. Candidate pairs are XOR on OZ — exactly one side carries an OZ position
-//      code. Two positions are never even compared.
-//   2. Union is guarded — a merged group may contain at most ONE distinct OZ
-//      code, so two positions cannot merge even transitively through a shared
-//      anchor. The union is refused otherwise.
-// The discriminator itself is biased to "distinct": any difference in model,
-// size, quantity, room, or value keeps the requirements apart.
-// ---------------------------------------------------------------------------
+// Semantic linking: a deliverable named in one place, specified in another, with no
+// shared code or text. An LLM discriminator links them. Safety: it only pulls a scope
+// statement onto a priced position, never fuses two positions — candidates are XOR on
+// OZ codes, unions hold at most one OZ code, biased to "distinct".
 
 const CONFIDENCE_RANK = { high: 3, medium: 2, low: 1 } as const;
 const PRIORITY_RANK = { must: 3, should: 2, optional: 1 } as const;
@@ -40,9 +26,8 @@ function tokenSet(req: ConsolidatedRequirement): Set<string> {
   );
 }
 
-// Overlap coefficient: |A ∩ B| / min(|A|, |B|). Unlike Jaccard it is not punished
-// when one description is a short scope line and the other a long spec — exactly
-// the name-vs-spec shape we are trying to surface.
+// Overlap coefficient (intersection / smaller size) — not punished when one side is a
+// short scope line and the other a long spec.
 function overlap(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 || b.size === 0) return 0;
   let inter = 0;
@@ -243,9 +228,8 @@ export async function linkSemantic(
       if (find(a.id) === find(b.id)) continue; // already linked transitively
       pairs++;
       calls++;
-      // Linking is best-effort: a discriminator call that fails (rate limit, auth,
-      // network) leaves the pair unlinked rather than crashing the run. Repeated
-      // failures abort the pass and the pipeline continues with what it has.
+      // Best-effort: a failed discriminator call leaves the pair unlinked; repeated
+      // failures abort the pass and the pipeline continues.
       let verdict: z.infer<typeof DiscriminatorSchema>;
       try {
         verdict = await discriminate(a, b);

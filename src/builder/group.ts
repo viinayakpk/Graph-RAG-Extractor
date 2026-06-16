@@ -12,11 +12,8 @@ function slugify(label: string): string {
   return label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 48) || "general";
 }
 
-// Deterministic fallback, used only when LLM grouping is unavailable. It invents no
-// categories and contains no per-document logic: it groups by the document's own
-// structure — its section heading, else its category code — as Level 2, under a
-// single neutral Level 1. Document-agnostic by construction, so it degrades the same
-// way for any tender rather than assuming one format's labels.
+// Deterministic fallback (used only when LLM grouping is unavailable): groups by the
+// document's own section/category under a neutral L1, with no per-document logic.
 export function discoverGroups(requirements: ConsolidatedRequirement[]): Group[] {
   const groupMap = new Map<string, Group>();
   for (const req of requirements) {

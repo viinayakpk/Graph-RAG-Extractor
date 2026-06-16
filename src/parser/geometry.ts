@@ -1,9 +1,7 @@
 import type { TextLine } from "../types/document.js";
 import { geometryConfig } from "../config.js";
 
-// pdfjs `getTextContent` items carry the geometry we need: a transform matrix
-// [a, b, c, d, e, f] where (e, f) is the glyph origin and d is the vertical scale
-// (≈ font size for unrotated text), plus the glyph width and height.
+// pdfjs glyph: transform [a,b,c,d,e,f] gives origin (e,f) and font size (d), plus width/height.
 interface PdfTextItem {
   str: string;
   width: number;
@@ -32,10 +30,8 @@ function toGlyph(item: PdfTextItem): Glyph {
   return { str: item.str, x: t[4] ?? 0, y: t[5] ?? 0, width: item.width, fontSize };
 }
 
-// Rebuild ordered text lines from pdfjs glyphs using their on-page geometry, so
-// reading order, line breaks, and per-line font size come from the page layout
-// itself rather than from the extractor's flattened character stream. This is
-// the signal the regex-based chunker was throwing away.
+// Rebuild ordered text lines from glyph geometry, so reading order, line breaks,
+// and per-line font size come from the page layout rather than a flattened stream.
 export function reconstructLines(items: object[]): TextLine[] {
   const glyphs: Glyph[] = [];
   for (const item of items) {

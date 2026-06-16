@@ -36,9 +36,7 @@ function extractPageText(items: object[]): string {
   return text.trimEnd();
 }
 
-// Sample count scales with document length — a fixed number under-samples a large
-// tender (and can miss a mid-document section) — but stays bounded so profiling a
-// very large document stays fast.
+// Sample count scales with document length, bounded so large tenders stay fast.
 function sampleSizeFor(pageCount: number): number {
   return Math.min(
     profilerConfig.sampleSizeMax,
